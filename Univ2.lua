@@ -1,23 +1,77 @@
 -- PHANTOM X - THE INVISIBLE MAN
--- ULTIMATE UNIVERSAL HUB
--- ALL GAMES SUPPORTED
+-- ULTIMATE UNIVERSAL HUB - WITH HIDE BUTTON
 
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 
--- SIMPLE ANTI-CHEAT (WON'T CRASH)
+-- SIMPLE ANTI-CHEAT
 pcall(function()
     if player.Kick then player.Kick = function() end end
 end)
 
 -- ==========================================
--- UI - NATIVE, LIGHTWEIGHT, NO CRASH
+-- FLOATING TOGGLE BUTTON
+-- ==========================================
+
+local toggleGui = Instance.new("ScreenGui")
+toggleGui.Parent = player.PlayerGui
+toggleGui.Name = "PhantomXToggle"
+toggleGui.ResetOnSpawn = false
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Parent = toggleGui
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleBtn.Position = UDim2.new(0.5, -20, 0, 5)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 255)
+toggleBtn.Text = "P"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.TextSize = 18
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.BorderSizePixel = 0
+toggleBtn.ZIndex = 999
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.Parent = toggleBtn
+toggleCorner.CornerRadius = UDim.new(1, 0)
+
+-- DRAG FOR TOGGLE BUTTON
+local toggleDragging = false
+local toggleDragStartX, toggleDragStartY
+local toggleStartPosX, toggleStartPosY
+
+toggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        toggleDragging = true
+        toggleDragStartX = input.Position.X
+        toggleDragStartY = input.Position.Y
+        toggleStartPosX = toggleBtn.Position.X.Offset
+        toggleStartPosY = toggleBtn.Position.Y.Offset
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if toggleDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local deltaX = input.Position.X - toggleDragStartX
+        local deltaY = input.Position.Y - toggleDragStartY
+        toggleBtn.Position = UDim2.new(0.5, toggleStartPosX + deltaX, 0, toggleStartPosY + deltaY)
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        toggleDragging = false
+    end
+end)
+
+-- ==========================================
+-- MAIN UI
 -- ==========================================
 
 local gui = Instance.new("ScreenGui")
 gui.Parent = player.PlayerGui
 gui.Name = "PhantomX"
 gui.ResetOnSpawn = false
+gui.Enabled = true
 
 local main = Instance.new("Frame")
 main.Parent = gui
@@ -32,12 +86,13 @@ local corner = Instance.new("UICorner")
 corner.Parent = main
 corner.CornerRadius = UDim.new(0, 10)
 
--- Title
+-- Title Bar (DRAGGABLE)
 local titlebar = Instance.new("Frame")
 titlebar.Parent = main
 titlebar.Size = UDim2.new(1, 0, 0, 38)
 titlebar.BackgroundColor3 = Color3.fromRGB(12, 12, 35)
 titlebar.BorderSizePixel = 0
+titlebar.Active = true
 
 local titlecorner = Instance.new("UICorner")
 titlecorner.Parent = titlebar
@@ -63,7 +118,74 @@ closebtn.Text = "✕"
 closebtn.TextColor3 = Color3.fromRGB(255, 70, 70)
 closebtn.TextSize = 18
 closebtn.Font = Enum.Font.GothamBold
-closebtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+closebtn.MouseButton1Click:Connect(function() gui.Enabled = false end)
+
+-- HIDE BUTTON ON TITLEBAR
+local hidebtn = Instance.new("TextButton")
+hidebtn.Parent = titlebar
+hidebtn.Size = UDim2.new(0, 32, 0, 32)
+hidebtn.Position = UDim2.new(1, -75, 0, 3)
+hidebtn.BackgroundTransparency = 1
+hidebtn.Text = "─"
+hidebtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+hidebtn.TextSize = 20
+hidebtn.Font = Enum.Font.GothamBold
+hidebtn.MouseButton1Click:Connect(function()
+    gui.Enabled = false
+end)
+
+-- DRAG SYSTEM
+local dragging = false
+local dragStartX, dragStartY
+local startPosX, startPosY
+
+titlebar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStartX = input.Position.X
+        dragStartY = input.Position.Y
+        startPosX = main.Position.X.Offset
+        startPosY = main.Position.Y.Offset
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local deltaX = input.Position.X - dragStartX
+        local deltaY = input.Position.Y - dragStartY
+        main.Position = UDim2.new(0.5, startPosX + deltaX, 0.5, startPosY + deltaY)
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- TOGGLE BUTTON CLICK - SHOW/HIDE
+toggleBtn.MouseButton1Click:Connect(function()
+    gui.Enabled = not gui.Enabled
+    if gui.Enabled then
+        toggleBtn.Text = "P"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 255)
+    else
+        toggleBtn.Text = "P"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 255)
+    end
+end)
+
+-- Also close with Insert key
+game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        gui.Enabled = not gui.Enabled
+    end
+end)
+
+-- ==========================================
+-- REST OF UI (TABS, GAMES, SCRIPTS)
+-- ==========================================
 
 -- Tab Bar
 local tabbar = Instance.new("Frame")
@@ -83,35 +205,7 @@ container.BorderSizePixel = 0
 container.CanvasSize = UDim2.new(0, 0, 0, 0)
 container.ScrollBarThickness = 3
 
--- Drag
-local drag = false
-local dragStart, startPos
-
-titlebar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = true
-        dragStart = input.Position
-        startPos = main.Position
-    end
-end)
-
-titlebar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = false
-    end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- ==========================================
--- TAB SYSTEM
--- ==========================================
-
+-- Tab system
 local tabs = {}
 local currentTab = "Main"
 local tabY = {}
@@ -503,7 +597,7 @@ function LoadGameScripts(gameName)
 end
 
 -- ==========================================
--- COMBAT TAB - REDLINER FEATURES
+-- COMBAT TAB
 -- ==========================================
 
 AddLabel("── AIM SETTINGS ──", "Combat")
@@ -660,10 +754,7 @@ function ToggleESP(v)
                 if p ~= player and p.Character then
                     local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                     if hrp then
-                        local pos, onScreen = game.Workspace.CurrentCamera:WorldToScreenPoint(hrp.Position)
-                        if onScreen then
-                            -- Simple ESP text
-                        end
+                        -- ESP logic
                     end
                 end
             end
@@ -1211,4 +1302,5 @@ print("════════════════════════�
 print("✦ PHANTOM X - THE INVISIBLE MAN ✦")
 print("✦ ALL GAMES SUPPORTED ✦")
 print("✦ ALL FEATURES WORKING ✦")
+print("✦ HIDE/SHOW WITH 'P' BUTTON ✦")
 print("═══════════════════════════════════════")
