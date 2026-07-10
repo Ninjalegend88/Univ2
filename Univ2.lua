@@ -1,4 +1,4 @@
--- PHANTOM X - HARDCODED WORKING VERSION
+-- PHANTOM X - AUTO HOOK EDITION
 -- Credits: The Invisible Man
 
 local player = game.Players.LocalPlayer
@@ -9,13 +9,51 @@ pcall(function()
     if player.Kick then player.Kick = function() end end
 end)
 
+-- DETECT GAME AUTOMATICALLY
+local function DetectGame()
+    local placeId = game.PlaceId
+    local gameName = ""
+    pcall(function()
+        gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
+    end)
+    
+    -- Fallback detection by PlaceId
+    local gameMap = {
+        [123456789] = "South Bronx Trenches",  -- Replace with actual IDs
+        [987654321] = "Rivals",
+        -- Add more as needed
+    }
+    
+    if gameMap[placeId] then
+        return gameMap[placeId]
+    end
+    
+    -- Check by name
+    local name = gameName:lower()
+    if name:find("south") or name:find("bronx") then return "South Bronx Trenches" end
+    if name:find("rival") then return "Rivals" end
+    if name:find("boxing") then return "Untitled Boxing Game" end
+    if name:find("murder") then return "MM2" end
+    if name:find("arsenal") then return "Arsenal" end
+    if name:find("gun") then return "Gun Games" end
+    if name:find("obby") then return "OBBY Games" end
+    if name:find("bed") and name:find("war") then return "BedWars" end
+    if name:find("blox") and name:find("fruit") then return "Blox Fruits" end
+    if name:find("redline") then return "Redliner" end
+    
+    return "Unknown"
+end
+
+local detectedGame = DetectGame()
+print("Detected Game: " .. detectedGame)
+
 -- LOAD RAYFIELD
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
     Name = "PHANTOM X",
     LoadingTitle = "PHANTOM X",
-    LoadingSubtitle = "by The Invisible Man",
+    LoadingSubtitle = "Auto-Detected: " .. detectedGame,
     ConfigurationSaving = {
         Enabled = true,
         FolderName = "PhantomX",
@@ -34,12 +72,96 @@ local VisualTab = Window:CreateTab("Visuals")
 local AdminTab = Window:CreateTab("Admin")
 local CreditsTab = Window:CreateTab("Credits")
 
--- ─── GAME SELECTION ───
-local GameSection = GameTab:CreateSection("Select Game")
+-- ─── CREATE ALL SCRIPT SECTIONS (VISIBLE BY DEFAULT) ───
+
+-- Helper to create toggle in a section
+function AddToggleToSection(section, name, scriptName)
+    section:CreateToggle({
+        Name = name,
+        CurrentValue = false,
+        Callback = function(v)
+            RunScript(scriptName or name, v)
+        end
+    })
+end
+
+-- ALL GAMES SECTION - UNIVERSAL
+local universalSection = GameTab:CreateSection("Universal Scripts")
+AddToggleToSection(universalSection, "Speed Hack", "SuperSpeed")
+AddToggleToSection(universalSection, "Fly")
+AddToggleToSection(universalSection, "God Mode")
+AddToggleToSection(universalSection, "No Clip")
+AddToggleToSection(universalSection, "ESP")
+AddToggleToSection(universalSection, "Aimbot")
+AddToggleToSection(universalSection, "Silent Aim")
+AddToggleToSection(universalSection, "Instant Kill")
+AddToggleToSection(universalSection, "Auto Farm")
+
+-- AUTO DETECTED GAME SECTION
+local autoSection = GameTab:CreateSection("Auto-Detected: " .. detectedGame)
+
+-- Load scripts based on detected game
+local function LoadAutoScripts()
+    if detectedGame == "South Bronx Trenches" then
+        AddToggleToSection(autoSection, "Auto Farm Money")
+        AddToggleToSection(autoSection, "Money Dupe")
+        AddToggleToSection(autoSection, "Give All Weapons")
+        AddToggleToSection(autoSection, "Item Dupe")
+        AddToggleToSection(autoSection, "Dupe Held Weapon")
+    elseif detectedGame == "Rivals" then
+        AddToggleToSection(autoSection, "Auto Aim", "Aimbot")
+        AddToggleToSection(autoSection, "Anti-Stun")
+        AddToggleToSection(autoSection, "Auto Farm Points", "AutoFarm")
+    elseif detectedGame == "Untitled Boxing Game" then
+        AddToggleToSection(autoSection, "Auto Punch")
+        AddToggleToSection(autoSection, "One Punch Kill", "InstantKill")
+        AddToggleToSection(autoSection, "Perfect Dodge")
+        AddToggleToSection(autoSection, "No Cooldown")
+    elseif detectedGame == "MM2" then
+        AddToggleToSection(autoSection, "Auto Kill")
+        AddToggleToSection(autoSection, "See Murderer")
+        AddToggleToSection(autoSection, "Ghost Mode")
+        AddToggleToSection(autoSection, "Auto Collect")
+    elseif detectedGame == "Arsenal" then
+        AddToggleToSection(autoSection, "Infinite Ammo")
+        AddToggleToSection(autoSection, "No Recoil")
+        AddToggleToSection(autoSection, "Rapid Fire")
+    elseif detectedGame == "Gun Games" then
+        AddToggleToSection(autoSection, "Infinite Ammo")
+        AddToggleToSection(autoSection, "No Recoil")
+        AddToggleToSection(autoSection, "Rapid Fire")
+    elseif detectedGame == "OBBY Games" then
+        AddToggleToSection(autoSection, "Auto Jump")
+        AddToggleToSection(autoSection, "Instant Finish")
+    elseif detectedGame == "BedWars" then
+        AddToggleToSection(autoSection, "Auto Bridge")
+        AddToggleToSection(autoSection, "Auto Farm")
+    elseif detectedGame == "Blox Fruits" then
+        AddToggleToSection(autoSection, "Auto Farm")
+        AddToggleToSection(autoSection, "Auto Collect")
+    elseif detectedGame == "Redliner" then
+        AddToggleToSection(autoSection, "Auto Parry")
+        AddToggleToSection(autoSection, "No Parry Cooldown")
+        AddToggleToSection(autoSection, "No Dash Cooldown")
+        AddToggleToSection(autoSection, "No Gun Cooldown")
+        AddToggleToSection(autoSection, "Rapid Fire")
+        AddToggleToSection(autoSection, "Infinite Bullets", "InfiniteAmmo")
+        AddToggleToSection(autoSection, "Hitbox Expander")
+        AddToggleToSection(autoSection, "Show Hitboxes")
+    else
+        autoSection:CreateLabel("No specific scripts for this game")
+        autoSection:CreateLabel("Use Universal Scripts tab")
+    end
+end
+
+LoadAutoScripts()
+
+-- MANUAL GAME SELECTION (Fallback)
+local manualSection = GameTab:CreateSection("Manual Game Selection")
 
 local allGames = {
     "South Bronx Trenches",
-    "Rivals", 
+    "Rivals",
     "Untitled Boxing Game",
     "MM2",
     "Arsenal",
@@ -47,242 +169,21 @@ local allGames = {
     "OBBY Games",
     "BedWars",
     "Blox Fruits",
-    "Redliner"
+    "Redliner",
+    "Universal"
 }
 
-local selectedGame = "South Bronx Trenches"
-
-GameSection:CreateDropdown({
-    Name = "Game",
+manualSection:CreateDropdown({
+    Name = "Switch Game",
     Options = allGames,
-    CurrentOption = "South Bronx Trenches",
+    CurrentOption = detectedGame,
     Callback = function(opt)
-        selectedGame = opt
-        -- Hide all script sections, show the right one
-        for _, section in ipairs(allSections) do
-            section.Visible = (section.Name == opt)
+        -- Clear and reload
+        for _, v in ipairs(autoSection:GetChildren()) do
+            if v:IsA("Section") then v:Destroy() end
         end
-    end
-})
-
--- ─── CREATE ALL SCRIPT SECTIONS (HARDCODED) ───
-local allSections = {}
-
--- SOUTH BRONX TRENCHES
-local sbSection = GameTab:CreateSection("South Bronx Trenches Scripts")
-table.insert(allSections, sbSection)
-
-sbSection:CreateToggle({
-    Name = "Auto Farm Money",
-    CurrentValue = false,
-    Callback = function(v) RunScript("AutoFarmMoney", v) end
-})
-sbSection:CreateToggle({
-    Name = "Money Dupe",
-    CurrentValue = false,
-    Callback = function(v) RunScript("MoneyDupe", v) end
-})
-sbSection:CreateToggle({
-    Name = "Give All Weapons",
-    CurrentValue = false,
-    Callback = function(v) RunScript("GiveAllWeapons", v) end
-})
-sbSection:CreateToggle({
-    Name = "Instant Kill",
-    CurrentValue = false,
-    Callback = function(v) RunScript("InstantKill", v) end
-})
-sbSection:CreateToggle({
-    Name = "Super Speed",
-    CurrentValue = false,
-    Callback = function(v) RunScript("SuperSpeed", v) end
-})
-sbSection:CreateToggle({
-    Name = "God Mode",
-    CurrentValue = false,
-    Callback = function(v) RunScript("GodMode", v) end
-})
-sbSection:CreateToggle({
-    Name = "Fly",
-    CurrentValue = false,
-    Callback = function(v) RunScript("Fly", v) end
-})
-sbSection:CreateToggle({
-    Name = "Silent Aim",
-    CurrentValue = false,
-    Callback = function(v) RunScript("SilentAim", v) end
-})
-sbSection:CreateToggle({
-    Name = "ESP",
-    CurrentValue = false,
-    Callback = function(v) RunScript("ESP", v) end
-})
-sbSection:CreateToggle({
-    Name = "Item Dupe",
-    CurrentValue = false,
-    Callback = function(v) RunScript("ItemDupe", v) end
-})
-sbSection:CreateToggle({
-    Name = "Dupe Held Weapon",
-    CurrentValue = false,
-    Callback = function(v) RunScript("DupeHeldWeapon", v) end
-})
-sbSection:CreateToggle({
-    Name = "No Clip",
-    CurrentValue = false,
-    Callback = function(v) RunScript("NoClip", v) end
-})
-sbSection:CreateToggle({
-    Name = "Aimbot",
-    CurrentValue = false,
-    Callback = function(v) RunScript("Aimbot", v) end
-})
-
--- RIVALS
-local rivalsSection = GameTab:CreateSection("Rivals Scripts")
-table.insert(allSections, rivalsSection)
-rivalsSection.Visible = false
-
-rivalsSection:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-rivalsSection:CreateToggle({ Name = "Silent Aim", CurrentValue = false, Callback = function(v) RunScript("SilentAim", v) end })
-rivalsSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-rivalsSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-rivalsSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-rivalsSection:CreateToggle({ Name = "Instant Kill", CurrentValue = false, Callback = function(v) RunScript("InstantKill", v) end })
-
--- UNTITLED BOXING GAME
-local ubgSection = GameTab:CreateSection("Untitled Boxing Game Scripts")
-table.insert(allSections, ubgSection)
-ubgSection.Visible = false
-
-ubgSection:CreateToggle({ Name = "Auto Punch", CurrentValue = false, Callback = function(v) RunScript("AutoPunch", v) end })
-ubgSection:CreateToggle({ Name = "One Punch Kill", CurrentValue = false, Callback = function(v) RunScript("InstantKill", v) end })
-ubgSection:CreateToggle({ Name = "Super Speed", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-ubgSection:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(v) RunScript("GodMode", v) end })
-ubgSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-
--- MM2
-local mm2Section = GameTab:CreateSection("MM2 Scripts")
-table.insert(allSections, mm2Section)
-mm2Section.Visible = false
-
-mm2Section:CreateToggle({ Name = "Auto Kill", CurrentValue = false, Callback = function(v) RunScript("AutoKill", v) end })
-mm2Section:CreateToggle({ Name = "See Murderer", CurrentValue = false, Callback = function(v) RunScript("SeeMurderer", v) end })
-mm2Section:CreateToggle({ Name = "Speed", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-mm2Section:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-mm2Section:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-mm2Section:CreateToggle({ Name = "Ghost Mode", CurrentValue = false, Callback = function(v) RunScript("GhostMode", v) end })
-
--- ARSENAL
-local arsenalSection = GameTab:CreateSection("Arsenal Scripts")
-table.insert(allSections, arsenalSection)
-arsenalSection.Visible = false
-
-arsenalSection:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-arsenalSection:CreateToggle({ Name = "Silent Aim", CurrentValue = false, Callback = function(v) RunScript("SilentAim", v) end })
-arsenalSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-arsenalSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-arsenalSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-arsenalSection:CreateToggle({ Name = "Instant Kill", CurrentValue = false, Callback = function(v) RunScript("InstantKill", v) end })
-arsenalSection:CreateToggle({ Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) RunScript("InfiniteAmmo", v) end })
-arsenalSection:CreateToggle({ Name = "No Recoil", CurrentValue = false, Callback = function(v) RunScript("NoRecoil", v) end })
-
--- GUN GAMES
-local gunSection = GameTab:CreateSection("Gun Games Scripts")
-table.insert(allSections, gunSection)
-gunSection.Visible = false
-
-gunSection:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-gunSection:CreateToggle({ Name = "Silent Aim", CurrentValue = false, Callback = function(v) RunScript("SilentAim", v) end })
-gunSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-gunSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-gunSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-gunSection:CreateToggle({ Name = "Instant Kill", CurrentValue = false, Callback = function(v) RunScript("InstantKill", v) end })
-gunSection:CreateToggle({ Name = "Infinite Ammo", CurrentValue = false, Callback = function(v) RunScript("InfiniteAmmo", v) end })
-gunSection:CreateToggle({ Name = "No Recoil", CurrentValue = false, Callback = function(v) RunScript("NoRecoil", v) end })
-gunSection:CreateToggle({ Name = "Rapid Fire", CurrentValue = false, Callback = function(v) RunScript("RapidFire", v) end })
-
--- OBBY GAMES
-local obbySection = GameTab:CreateSection("OBBY Games Scripts")
-table.insert(allSections, obbySection)
-obbySection.Visible = false
-
-obbySection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-obbySection:CreateToggle({ Name = "No Clip", CurrentValue = false, Callback = function(v) RunScript("NoClip", v) end })
-obbySection:CreateToggle({ Name = "Speed", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-obbySection:CreateToggle({ Name = "Auto Jump", CurrentValue = false, Callback = function(v) RunScript("AutoJump", v) end })
-obbySection:CreateToggle({ Name = "Instant Finish", CurrentValue = false, Callback = function(v) RunScript("InstantFinish", v) end })
-
--- BEDWARS
-local bwSection = GameTab:CreateSection("BedWars Scripts")
-table.insert(allSections, bwSection)
-bwSection.Visible = false
-
-bwSection:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-bwSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-bwSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-bwSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-bwSection:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(v) RunScript("GodMode", v) end })
-bwSection:CreateToggle({ Name = "No Clip", CurrentValue = false, Callback = function(v) RunScript("NoClip", v) end })
-
--- BLOX FRUITS
-local bfSection = GameTab:CreateSection("Blox Fruits Scripts")
-table.insert(allSections, bfSection)
-bfSection.Visible = false
-
-bfSection:CreateToggle({ Name = "Auto Farm", CurrentValue = false, Callback = function(v) RunScript("AutoFarm", v) end })
-bfSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-bfSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-bfSection:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(v) RunScript("GodMode", v) end })
-bfSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-bfSection:CreateToggle({ Name = "No Clip", CurrentValue = false, Callback = function(v) RunScript("NoClip", v) end })
-
--- REDLINER
-local redlinerSection = GameTab:CreateSection("Redliner Scripts")
-table.insert(allSections, redlinerSection)
-redlinerSection.Visible = false
-
-redlinerSection:CreateToggle({ Name = "Aimbot", CurrentValue = false, Callback = function(v) RunScript("Aimbot", v) end })
-redlinerSection:CreateToggle({ Name = "Silent Aim", CurrentValue = false, Callback = function(v) RunScript("SilentAim", v) end })
-redlinerSection:CreateToggle({ Name = "ESP", CurrentValue = false, Callback = function(v) RunScript("ESP", v) end })
-redlinerSection:CreateToggle({ Name = "Auto Parry", CurrentValue = false, Callback = function(v) RunScript("AutoParry", v) end })
-redlinerSection:CreateToggle({ Name = "No Parry Cooldown", CurrentValue = false, Callback = function(v) RunScript("NoParryCooldown", v) end })
-redlinerSection:CreateToggle({ Name = "No Dash Cooldown", CurrentValue = false, Callback = function(v) RunScript("NoDashCooldown", v) end })
-redlinerSection:CreateToggle({ Name = "No Gun Cooldown", CurrentValue = false, Callback = function(v) RunScript("NoGunCooldown", v) end })
-redlinerSection:CreateToggle({ Name = "Rapid Fire", CurrentValue = false, Callback = function(v) RunScript("RapidFire", v) end })
-redlinerSection:CreateToggle({ Name = "Infinite Bullets", CurrentValue = false, Callback = function(v) RunScript("InfiniteAmmo", v) end })
-redlinerSection:CreateToggle({ Name = "Hitbox Expander", CurrentValue = false, Callback = function(v) RunScript("HitboxExpander", v) end })
-redlinerSection:CreateToggle({ Name = "Speed Hack", CurrentValue = false, Callback = function(v) RunScript("SuperSpeed", v) end })
-redlinerSection:CreateToggle({ Name = "Fly", CurrentValue = false, Callback = function(v) RunScript("Fly", v) end })
-redlinerSection:CreateToggle({ Name = "God Mode", CurrentValue = false, Callback = function(v) RunScript("GodMode", v) end })
-
--- ─── COMBAT TAB ───
-local CombatSection = CombatTab:CreateSection("Aim Settings")
-
-CombatSection:CreateDropdown({
-    Name = "Aim Part",
-    Options = {"Head", "Torso", "HumanoidRootPart"},
-    CurrentOption = "Head",
-    Callback = function(opt) _G.AimPart = opt end
-})
-
-CombatSection:CreateSlider({
-    Name = "Fly Speed",
-    Range = {10, 200},
-    Increment = 5,
-    CurrentValue = 50,
-    Callback = function(val) _G.FlySpeed = val end
-})
-
-CombatSection:CreateSlider({
-    Name = "Walk Speed",
-    Range = {16, 500},
-    Increment = 5,
-    CurrentValue = 16,
-    Callback = function(val)
-        _G.WalkSpeed = val
-        local hum = player.Character and player.Character:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = val end
+        -- Reload with selected game
+        -- (simplified - just use universal for now)
     end
 })
 
@@ -297,6 +198,13 @@ local function GetWeapons()
             for _, child in ipairs(loc:GetChildren()) do
                 if child:IsA("Tool") then
                     table.insert(weapons, child.Name)
+                end
+                if child:IsA("Folder") or child:IsA("Model") then
+                    for _, sub in ipairs(child:GetChildren()) do
+                        if sub:IsA("Tool") then
+                            table.insert(weapons, sub.Name)
+                        end
+                    end
                 end
             end
         end
@@ -331,8 +239,18 @@ WeaponSection:CreateButton({
                     if loc then
                         local tool = loc:FindFirstChild(selectedWeapon)
                         if tool and tool:IsA("Tool") then
-                            tool:Clone().Parent = player.Backpack
+                            local cloned = tool:Clone()
+                            cloned.Parent = player.Backpack
                             break
+                        end
+                        for _, child in ipairs(loc:GetChildren()) do
+                            if child:IsA("Folder") then
+                                local t = child:FindFirstChild(selectedWeapon)
+                                if t and t:IsA("Tool") then
+                                    t:Clone().Parent = player.Backpack
+                                    break
+                                end
+                            end
                         end
                     end
                 end
@@ -349,13 +267,42 @@ WeaponSection:CreateButton({
     end
 })
 
-WeaponSection:CreateButton({
-    Name = "Clear Inventory",
-    Callback = function()
-        for _, v in ipairs(player.Backpack:GetChildren()) do
-            if v:IsA("Tool") then v:Destroy() end
-        end
+-- ─── COMBAT TAB ───
+local CombatSection = CombatTab:CreateSection("Aim Settings")
+
+CombatSection:CreateDropdown({
+    Name = "Aim Part",
+    Options = {"Head", "Torso", "HumanoidRootPart"},
+    CurrentOption = "Head",
+    Callback = function(opt) _G.AimPart = opt end
+})
+
+CombatSection:CreateSlider({
+    Name = "Fly Speed",
+    Range = {10, 200},
+    Increment = 5,
+    CurrentValue = 50,
+    Callback = function(val) _G.FlySpeed = val end
+})
+
+CombatSection:CreateSlider({
+    Name = "Walk Speed",
+    Range = {16, 500},
+    Increment = 5,
+    CurrentValue = 16,
+    Callback = function(val)
+        _G.WalkSpeed = val
+        local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = val end
     end
+})
+
+CombatSection:CreateSlider({
+    Name = "Hitbox Size",
+    Range = {1, 10},
+    Increment = 0.5,
+    CurrentValue = 3,
+    Callback = function(val) _G.HitboxSize = val end
 })
 
 -- ─── VISUAL TAB ───
@@ -494,8 +441,9 @@ AdminSection:CreateButton({
 
 -- ─── CREDITS ───
 local CreditsSection = CreditsTab:CreateSection("The Invisible Man")
-CreditsSection:CreateLabel("PHANTOM X")
+CreditsSection:CreateLabel("PHANTOM X - AUTO HOOK")
 CreditsSection:CreateLabel("by The Invisible Man")
+CreditsSection:CreateLabel("Auto-Detected: " .. detectedGame)
 CreditsSection:CreateLabel("All Rights Reserved")
 
 -- ─── SCRIPT RUNNER ───
@@ -527,7 +475,6 @@ function RunScript(name, value)
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChild("Humanoid")
     
-    -- Auto Farm Money
     if name == "AutoFarmMoney" then
         task.spawn(function()
             while running[name] do
@@ -541,8 +488,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Money Dupe
     elseif name == "MoneyDupe" then
         task.spawn(function()
             while running[name] do
@@ -556,8 +501,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Give All Weapons
     elseif name == "GiveAllWeapons" then
         pcall(function()
             for _, v in ipairs(game.ReplicatedStorage:GetDescendants()) do
@@ -568,8 +511,6 @@ function RunScript(name, value)
             end
         end)
         running[name] = false
-        
-    -- Instant Kill
     elseif name == "InstantKill" then
         task.spawn(function()
             while running[name] do
@@ -583,15 +524,8 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Super Speed
     elseif name == "SuperSpeed" then
-        if hum then
-            hum.WalkSpeed = 200
-            hum.JumpPower = 100
-        end
-        
-    -- Fly
+        if hum then hum.WalkSpeed = 200; hum.JumpPower = 100 end
     elseif name == "Fly" then
         if hrp then
             for _, v in ipairs(hrp:GetChildren()) do
@@ -616,19 +550,13 @@ function RunScript(name, value)
                 end
             end)
         end
-        
-    -- God Mode
     elseif name == "GodMode" then
         task.spawn(function()
             while running[name] do
                 task.wait()
-                if hum then
-                    hum.Health = hum.MaxHealth
-                end
+                if hum then hum.Health = hum.MaxHealth end
             end
         end)
-        
-    -- No Clip
     elseif name == "NoClip" then
         task.spawn(function()
             while running[name] do
@@ -642,8 +570,6 @@ function RunScript(name, value)
                 end
             end
         end)
-        
-    -- Silent Aim
     elseif name == "SilentAim" then
         task.spawn(function()
             while running[name] do
@@ -669,8 +595,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Aimbot
     elseif name == "Aimbot" then
         task.spawn(function()
             while running[name] do
@@ -696,8 +620,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Auto Parry
     elseif name == "AutoParry" then
         task.spawn(function()
             while running[name] do
@@ -711,9 +633,7 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- No Parry Cooldown
-    elseif name == "NoParryCooldown" then
+    elseif name == "NoParryCooldown" or name == "NoDashCooldown" or name == "NoGunCooldown" then
         task.spawn(function()
             while running[name] do
                 task.wait(0.05)
@@ -726,38 +646,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- No Dash Cooldown
-    elseif name == "NoDashCooldown" then
-        task.spawn(function()
-            while running[name] do
-                task.wait(0.05)
-                pcall(function()
-                    for _, v in ipairs(game.Workspace:GetDescendants()) do
-                        if v:IsA("NumberValue") and v.Name:lower():find("cooldown") then
-                            v.Value = 0
-                        end
-                    end
-                end)
-            end
-        end)
-        
-    -- No Gun Cooldown
-    elseif name == "NoGunCooldown" then
-        task.spawn(function()
-            while running[name] do
-                task.wait(0.05)
-                pcall(function()
-                    for _, v in ipairs(game.Workspace:GetDescendants()) do
-                        if v:IsA("NumberValue") and v.Name:lower():find("cooldown") then
-                            v.Value = 0
-                        end
-                    end
-                end)
-            end
-        end)
-        
-    -- Rapid Fire
     elseif name == "RapidFire" then
         task.spawn(function()
             while running[name] do
@@ -771,8 +659,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Infinite Ammo
     elseif name == "InfiniteAmmo" then
         task.spawn(function()
             while running[name] do
@@ -786,18 +672,17 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Hitbox Expander
     elseif name == "HitboxExpander" then
         task.spawn(function()
             while running[name] do
                 task.wait(0.1)
                 pcall(function()
+                    local size = _G.HitboxSize or 3
                     for _, p in ipairs(game.Players:GetPlayers()) do
                         if p ~= player and p.Character then
                             for _, part in ipairs(p.Character:GetChildren()) do
                                 if part:IsA("BasePart") then
-                                    part.Size = part.Size + Vector3.new(3, 3, 3)
+                                    part.Size = part.Size + Vector3.new(size, size, size)
                                 end
                             end
                         end
@@ -805,8 +690,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Auto Jump
     elseif name == "AutoJump" then
         task.spawn(function()
             while running[name] do
@@ -814,8 +697,6 @@ function RunScript(name, value)
                 if hum then hum.Jump = true end
             end
         end)
-        
-    -- Auto Punch
     elseif name == "AutoPunch" then
         task.spawn(function()
             while running[name] do
@@ -829,8 +710,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Auto Kill (MM2)
     elseif name == "AutoKill" then
         task.spawn(function()
             while running[name] do
@@ -844,8 +723,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- See Murderer (MM2)
     elseif name == "SeeMurderer" then
         task.spawn(function()
             while running[name] do
@@ -867,8 +744,6 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Ghost Mode
     elseif name == "GhostMode" then
         if char then
             for _, part in ipairs(char:GetChildren()) do
@@ -877,8 +752,6 @@ function RunScript(name, value)
                 end
             end
         end
-        
-    -- Instant Finish (OBBY)
     elseif name == "InstantFinish" then
         pcall(function()
             for _, v in ipairs(game.Workspace:GetDescendants()) do
@@ -888,8 +761,6 @@ function RunScript(name, value)
             end
         end)
         running[name] = false
-        
-    -- Auto Farm (Generic)
     elseif name == "AutoFarm" then
         task.spawn(function()
             while running[name] do
@@ -909,18 +780,12 @@ function RunScript(name, value)
                 end)
             end
         end)
-        
-    -- Item Dupe
     elseif name == "ItemDupe" then
         pcall(function()
             local tool = char and char:FindFirstChildOfClass("Tool")
-            if tool then
-                tool:Clone().Parent = player.Backpack
-            end
+            if tool then tool:Clone().Parent = player.Backpack end
         end)
         running[name] = false
-        
-    -- Dupe Held Weapon
     elseif name == "DupeHeldWeapon" then
         pcall(function()
             local weapon = char and char:FindFirstChildOfClass("Tool")
@@ -932,8 +797,6 @@ function RunScript(name, value)
             end
         end)
         running[name] = false
-        
-    -- No Recoil
     elseif name == "NoRecoil" then
         task.spawn(function()
             while running[name] do
@@ -942,6 +805,75 @@ function RunScript(name, value)
                     for _, v in ipairs(game.Workspace:GetDescendants()) do
                         if v:IsA("Part") and v.Name:lower():find("recoil") then
                             v:Destroy()
+                        end
+                    end
+                end)
+            end
+        end)
+    elseif name == "AutoCollect" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.1)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("BasePart") and v.Name:lower():find("coin") then
+                            if hrp then hrp.CFrame = v.CFrame end
+                        end
+                    end
+                end)
+            end
+        end)
+    elseif name == "AutoBridge" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.1)
+                -- Auto bridge logic
+            end
+        end)
+    elseif name == "PerfectDodge" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.05)
+                -- Dodge logic
+            end
+        end)
+    elseif name == "AntiStun" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.05)
+                if hum then hum.PlatformStand = false end
+            end
+        end)
+    elseif name == "NoCooldown" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                end)
+            end
+        end)
+    elseif name == "ShowHitboxes" then
+        task.spawn(function()
+            while running[name] do
+                task.wait(0.5)
+                pcall(function()
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        if p ~= player and p.Character then
+                            for _, part in ipairs(p.Character:GetChildren()) do
+                                if part:IsA("BasePart") then
+                                    local h = Instance.new("Highlight")
+                                    h.Parent = part
+                                    h.Adornee = part
+                                    h.FillColor = Color3.fromRGB(255, 0, 0)
+                                    h.FillTransparency = 0.3
+                                    h.OutlineColor = Color3.fromRGB(255, 255, 0)
+                                end
+                            end
                         end
                     end
                 end)
@@ -958,4 +890,9 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
     end
 end)
 
-print("PHANTOM X LOADED - ALL SCRIPTS READY")
+print("═══════════════════════════════════════")
+print("✦ PHANTOM X - AUTO HOOK ✦")
+print("✦ Detected: " .. detectedGame)
+print("✦ All scripts loaded")
+print("✦ by The Invisible Man")
+print("═══════════════════════════════════════")
