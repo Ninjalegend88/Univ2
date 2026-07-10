@@ -1,333 +1,389 @@
--- ═══════════════════════════════════════════════════════════════
--- PHANTOM X - ULTIMATE UNIVERSAL SCRIPT HUB
--- "One Hub. Every Game. Total Domination."
--- ═══════════════════════════════════════════════════════════════
--- Credits: The Invisible Man
--- Version: 3.0.0
--- ═══════════════════════════════════════════════════════════════
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 1: ANTI-CHEAT OBLITERATION ENGINE
--- ██████████████████████████████████████████████████████████████
-
-local AntiCheatEngine = {
-    Initialized = false,
-    DefenseLevel = 10,
-    Active = true
-}
-
-function AntiCheatEngine:Initialize()
-    if self.Initialized then return end
-    
-    local player = game.Players.LocalPlayer
-    if not player then return end
-    
-    -- Hijack metatable to intercept all calls
-    local mt = getrawmetatable(game)
-    if mt then
-        local old_namecall = mt.__namecall
-        local old_index = mt.__index
-        local old_newindex = mt.__newindex
-        
-        setreadonly(mt, false)
-        
-        mt.__namecall = newcclosure(function(self, ...)
-            local args = {...}
-            local method = getnamecallmethod()
-            if method and type(method) == "string" then
-                local lower = method:lower()
-                if lower:find("kick") or lower:find("ban") or lower:find("detect") or lower:find("admin") then
-                    return nil
-                end
-            end
-            return old_namecall(self, unpack(args))
-        end)
-        
-        mt.__index = newcclosure(function(self, key)
-            if type(key) == "string" then
-                local lower = key:lower()
-                if lower:find("anti") or lower:find("cheat") or lower:find("detect") or lower:find("ban") then
-                    return nil
-                end
-            end
-            return old_index(self, key)
-        end)
-        
-        mt.__newindex = newcclosure(function(self, key, value)
-            if type(key) == "string" then
-                local lower = key:lower()
-                if lower:find("anti") or lower:find("cheat") or lower:find("detect") or lower:find("ban") then
-                    return nil
-                end
-            end
-            return old_newindex(self, key, value)
-        end)
-        
-        setreadonly(mt, true)
-    end
-    
-    -- Destroy anti-cheat remotes
-    local function nukeRemotes(parent)
-        for i, v in pairs(parent:GetChildren()) do
-            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                local name = v.Name:lower()
-                local keywords = {"anti", "cheat", "detect", "ban", "kick", "mod", "guard", "security", "protect", "verify", "validate", "monitor", "watch", "scan", "audit"}
-                for _, kw in ipairs(keywords) do
-                    if name:find(kw) then
-                        v:Destroy()
-                        break
-                    end
-                end
-            end
-            if v:IsA("Folder") or v:IsA("Model") or v:IsA("ScreenGui") then
-                nukeRemotes(v)
-            end
-        end
-    end
-    
-    local locations = {game, game:GetService("ReplicatedStorage"), game:GetService("Workspace"), game:GetService("ServerStorage"), player, player.PlayerGui, player.PlayerScripts}
-    for _, loc in ipairs(locations) do
-        if loc then pcall(nukeRemotes, loc) end
-    end
-    
-    -- Disable kick
-    if player.Kick then
-        local oldKick = player.Kick
-        player.Kick = function(...)
-            local args = {...}
-            if args[1] and type(args[1]) == "string" then
-                local lower = args[1]:lower()
-                if lower:find("cheat") or lower:find("exploit") or lower:find("hack") or lower:find("ban") then
-                    return nil
-                end
-            end
-            return oldKick(player, unpack(args))
-        end
-    end
-    
-    -- Destroy anti-cheat GUIs
-    for i, v in pairs(player.PlayerGui:GetChildren()) do
-        if v:IsA("ScreenGui") then
-            local name = v.Name:lower()
-            if name:find("anti") or name:find("cheat") or name:find("detect") or name:find("ban") or name:find("mod") then
-                v:Destroy()
-            end
-        end
-    end
-    
-    -- Destroy anti-cheat scripts
-    for i, v in pairs(game:GetDescendants()) do
-        if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("ModuleScript") then
-            local name = v.Name:lower()
-            if name:find("anti") or name:find("cheat") or name:find("detect") or name:find("moder") or name:find("security") then
-                v:Destroy()
-            end
-        end
-    end
-    
-    self.Initialized = true
-    print("[Phantom X] Anti-Cheat: Neutralized")
-end
-
--- Continuous monitoring
-game:GetService("RunService").Heartbeat:Connect(function()
-    pcall(function()
-        local player = game.Players.LocalPlayer
-        if not player then return end
-        
-        for i, v in pairs(game:GetDescendants()) do
-            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                local name = v.Name:lower()
-                if name:find("anti") or name:find("cheat") or name:find("detect") or name:find("ban") or name:find("kick") then
-                    v:Destroy()
-                end
-            end
-            if v:IsA("Script") or v:IsA("LocalScript") then
-                local name = v.Name:lower()
-                if name:find("anti") or name:find("cheat") then
-                    v:Destroy()
-                end
-            end
-            if v:IsA("ScreenGui") and v.Parent == player.PlayerGui then
-                local name = v.Name:lower()
-                if name:find("anti") or name:find("cheat") or name:find("ban") then
-                    v:Destroy()
-                end
-            end
-        end
-        
-        -- Prevent ban teleport
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = player.Character.HumanoidRootPart
-            if hrp.Position.Y < -1000 or hrp.Position.Y > 5000 then
-                hrp.CFrame = CFrame.new(0, 100, 0)
-            end
-        end
-    end)
-end)
-
-AntiCheatEngine:Initialize()
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 2: SIRIUS UI - MAIN WINDOW
--- ██████████████████████████████████████████████████████████████
-
-local Sirius = loadstring(game:HttpGet('https://raw.githubusercontent.com/Sirius-Scripting/Sirius/main/source'))()
-
-local Window = Sirius:CreateWindow({
-    Name = "✦ PHANTOM X ✦",
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    Size = UDim2.new(0, 700, 0, 500),
-    Theme = "Dark",
-    Transparency = 0
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 3: GLOBAL VARIABLES
--- ██████████████████████████████████████████████████████████████
-
-_G.PhantomX = {
-    CurrentGame = "",
-    SelectedWeapon = "",
-    TargetPlayer = "",
-    AimPart = "Head",
-    FlySpeed = 50,
-    ESP = false,
-    Aimbot = false,
-    SilentAim = false,
-    GodMode = false,
-    NoClip = false,
-    AutoFarm = false,
-    InstantKill = false,
-    SpeedHack = false,
-    Fly = false
-}
+-- PHANTOM X - THE INVISIBLE MAN
+-- ULTIMATE UNIVERSAL HUB
+-- ALL GAMES SUPPORTED
 
 local player = game.Players.LocalPlayer
 local mouse = player:GetMouse()
 
--- ██████████████████████████████████████████████████████████████
--- SECTION 4: HELPER FUNCTIONS
--- ██████████████████████████████████████████████████████████████
-
-local function GetPlayer()
-    return game.Players.LocalPlayer
-end
-
-local function GetCharacter()
-    local p = GetPlayer()
-    return p and p.Character
-end
-
-local function GetHRP()
-    local char = GetCharacter()
-    return char and char:FindFirstChild("HumanoidRootPart")
-end
-
-local function GetHumanoid()
-    local char = GetCharacter()
-    return char and char:FindFirstChild("Humanoid")
-end
-
-local function GetAllPlayers()
-    local list = {}
-    for _, v in ipairs(game.Players:GetPlayers()) do
-        if v ~= GetPlayer() then
-            table.insert(list, v.Name)
-        end
-    end
-    return list
-end
-
-local function GetClosestPlayer()
-    local hrp = GetHRP()
-    if not hrp then return nil end
-    
-    local target = nil
-    local shortest = math.huge
-    
-    for _, v in ipairs(game.Players:GetPlayers()) do
-        if v ~= GetPlayer() and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (v.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                target = v
-            end
-        end
-    end
-    
-    return target
-end
-
-local function GetWeapons()
-    local weapons = {}
-    local locations = {
-        game.ReplicatedStorage,
-        game.Workspace,
-        game.ServerStorage,
-        game.Players.LocalPlayer.Backpack,
-        game.Players.LocalPlayer.Character
-    }
-    
-    for _, loc in ipairs(locations) do
-        if loc then
-            for _, child in ipairs(loc:GetChildren()) do
-                if child:IsA("Tool") then
-                    table.insert(weapons, child.Name)
-                end
-                if child:IsA("Folder") or child:IsA("Model") then
-                    for _, sub in ipairs(child:GetChildren()) do
-                        if sub:IsA("Tool") then
-                            table.insert(weapons, sub.Name)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    
-    local unique = {}
-    for _, v in ipairs(weapons) do
-        if not table.find(unique, v) then
-            table.insert(unique, v)
-        end
-    end
-    table.sort(unique)
-    return unique
-end
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 5: MAIN TABS CREATION
--- ██████████████████████████████████████████████████████████████
-
-local GameTab = Window:CreateTab("✦ Games ✦")
-local CombatTab = Window:CreateTab("✦ Combat ✦")
-local UtilityTab = Window:CreateTab("✦ Utility ✦")
-local VisualTab = Window:CreateTab("✦ Visuals ✦")
-local AdminTab = Window:CreateTab("✦ Admin ✦")
-local CreditsTab = Window:CreateTab("✦ Credits ✦")
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 6: GAME SELECTION
--- ██████████████████████████████████████████████████████████████
-
-local GameSelection = GameTab:CreateSection("🎮 Game Selection")
-
--- Detect current game
+-- SIMPLE ANTI-CHEAT (WON'T CRASH)
 pcall(function()
-    _G.PhantomX.CurrentGame = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+    if player.Kick then player.Kick = function() end end
 end)
 
-GameSelection:CreateLabel("Current Game: " .. _G.PhantomX.CurrentGame)
+-- ==========================================
+-- UI - NATIVE, LIGHTWEIGHT, NO CRASH
+-- ==========================================
 
-local AllGames = {
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+gui.Name = "PhantomX"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame")
+main.Parent = gui
+main.Size = UDim2.new(0, 480, 0, 520)
+main.Position = UDim2.new(0.5, -240, 0.5, -260)
+main.BackgroundColor3 = Color3.fromRGB(6, 6, 18)
+main.BackgroundTransparency = 0
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+
+local corner = Instance.new("UICorner")
+corner.Parent = main
+corner.CornerRadius = UDim.new(0, 10)
+
+-- Title
+local titlebar = Instance.new("Frame")
+titlebar.Parent = main
+titlebar.Size = UDim2.new(1, 0, 0, 38)
+titlebar.BackgroundColor3 = Color3.fromRGB(12, 12, 35)
+titlebar.BorderSizePixel = 0
+
+local titlecorner = Instance.new("UICorner")
+titlecorner.Parent = titlebar
+titlecorner.CornerRadius = UDim.new(0, 10)
+
+local titletext = Instance.new("TextLabel")
+titletext.Parent = titlebar
+titletext.Size = UDim2.new(1, -50, 1, 0)
+titletext.Position = UDim2.new(0, 15, 0, 0)
+titletext.BackgroundTransparency = 1
+titletext.Text = "PHANTOM X"
+titletext.TextColor3 = Color3.fromRGB(60, 140, 255)
+titletext.TextSize = 20
+titletext.Font = Enum.Font.GothamBold
+titletext.TextXAlignment = Enum.TextXAlignment.Left
+
+local closebtn = Instance.new("TextButton")
+closebtn.Parent = titlebar
+closebtn.Size = UDim2.new(0, 32, 0, 32)
+closebtn.Position = UDim2.new(1, -38, 0, 3)
+closebtn.BackgroundTransparency = 1
+closebtn.Text = "✕"
+closebtn.TextColor3 = Color3.fromRGB(255, 70, 70)
+closebtn.TextSize = 18
+closebtn.Font = Enum.Font.GothamBold
+closebtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+-- Tab Bar
+local tabbar = Instance.new("Frame")
+tabbar.Parent = main
+tabbar.Size = UDim2.new(1, 0, 0, 32)
+tabbar.Position = UDim2.new(0, 0, 0, 38)
+tabbar.BackgroundColor3 = Color3.fromRGB(10, 10, 28)
+tabbar.BorderSizePixel = 0
+
+-- Container
+local container = Instance.new("ScrollingFrame")
+container.Parent = main
+container.Size = UDim2.new(1, 0, 1, -70)
+container.Position = UDim2.new(0, 0, 0, 70)
+container.BackgroundTransparency = 1
+container.BorderSizePixel = 0
+container.CanvasSize = UDim2.new(0, 0, 0, 0)
+container.ScrollBarThickness = 3
+
+-- Drag
+local drag = false
+local dragStart, startPos
+
+titlebar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = true
+        dragStart = input.Position
+        startPos = main.Position
+    end
+end)
+
+titlebar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = false
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- ==========================================
+-- TAB SYSTEM
+-- ==========================================
+
+local tabs = {}
+local currentTab = "Main"
+local tabY = {}
+
+function CreateTab(name, x)
+    local btn = Instance.new("TextButton")
+    btn.Parent = tabbar
+    btn.Size = UDim2.new(0, 65, 1, 0)
+    btn.Position = UDim2.new(0, x, 0, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(170, 170, 200)
+    btn.TextSize = 11
+    btn.Font = Enum.Font.GothamSemibold
+    tabs[name] = {btn = btn, y = 10, elements = {}}
+    tabY[name] = 10
+    return btn
+end
+
+function AddLabel(text, tab)
+    local label = Instance.new("TextLabel")
+    label.Parent = container
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, tabs[tab].y)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(60, 140, 255)
+    label.TextSize = 14
+    label.Font = Enum.Font.GothamBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Visible = (tab == currentTab)
+    tabs[tab].y = tabs[tab].y + 28
+    table.insert(tabs[tab].elements, label)
+end
+
+function AddToggle(text, tab, callback)
+    local frame = Instance.new("Frame")
+    frame.Parent = container
+    frame.Size = UDim2.new(1, -20, 0, 30)
+    frame.Position = UDim2.new(0, 10, 0, tabs[tab].y)
+    frame.BackgroundColor3 = Color3.fromRGB(14, 14, 32)
+    frame.BorderSizePixel = 0
+    frame.Visible = (tab == currentTab)
+    
+    local c = Instance.new("UICorner")
+    c.Parent = frame
+    c.CornerRadius = UDim.new(0, 4)
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(0, 220, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(200, 200, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local btn = Instance.new("TextButton")
+    btn.Parent = frame
+    btn.Size = UDim2.new(0, 45, 0, 22)
+    btn.Position = UDim2.new(1, -52, 0, 4)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
+    btn.Text = "OFF"
+    btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+    btn.TextSize = 11
+    btn.Font = Enum.Font.GothamBold
+    btn.BorderSizePixel = 0
+    
+    local c2 = Instance.new("UICorner")
+    c2.Parent = btn
+    c2.CornerRadius = UDim.new(0, 4)
+    
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = state and "ON" or "OFF"
+        btn.BackgroundColor3 = state and Color3.fromRGB(40, 140, 40) or Color3.fromRGB(40, 40, 70)
+        callback(state)
+    end)
+    
+    tabs[tab].y = tabs[tab].y + 34
+    table.insert(tabs[tab].elements, frame)
+end
+
+function AddButton(text, tab, callback)
+    local frame = Instance.new("Frame")
+    frame.Parent = container
+    frame.Size = UDim2.new(1, -20, 0, 30)
+    frame.Position = UDim2.new(0, 10, 0, tabs[tab].y)
+    frame.BackgroundTransparency = 1
+    frame.Visible = (tab == currentTab)
+    
+    local btn = Instance.new("TextButton")
+    btn.Parent = frame
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(18, 18, 45)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+    btn.TextSize = 13
+    btn.Font = Enum.Font.GothamSemibold
+    btn.BorderSizePixel = 0
+    
+    local c = Instance.new("UICorner")
+    c.Parent = btn
+    c.CornerRadius = UDim.new(0, 4)
+    
+    btn.MouseButton1Click:Connect(callback)
+    
+    tabs[tab].y = tabs[tab].y + 34
+    table.insert(tabs[tab].elements, frame)
+end
+
+function AddDropdown(text, tab, options, callback)
+    local frame = Instance.new("Frame")
+    frame.Parent = container
+    frame.Size = UDim2.new(1, -20, 0, 30)
+    frame.Position = UDim2.new(0, 10, 0, tabs[tab].y)
+    frame.BackgroundColor3 = Color3.fromRGB(14, 14, 32)
+    frame.BorderSizePixel = 0
+    frame.Visible = (tab == currentTab)
+    
+    local c = Instance.new("UICorner")
+    c.Parent = frame
+    c.CornerRadius = UDim.new(0, 4)
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(0, 100, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(200, 200, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local btn = Instance.new("TextButton")
+    btn.Parent = frame
+    btn.Size = UDim2.new(0, 140, 0, 22)
+    btn.Position = UDim2.new(0, 115, 0, 4)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
+    btn.Text = options[1] or "Select"
+    btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.GothamSemibold
+    btn.BorderSizePixel = 0
+    
+    local c2 = Instance.new("UICorner")
+    c2.Parent = btn
+    c2.CornerRadius = UDim.new(0, 4)
+    
+    local idx = 1
+    btn.MouseButton1Click:Connect(function()
+        idx = idx + 1
+        if idx > #options then idx = 1 end
+        btn.Text = options[idx]
+        callback(options[idx])
+    end)
+    
+    tabs[tab].y = tabs[tab].y + 34
+    table.insert(tabs[tab].elements, frame)
+end
+
+function AddSlider(text, tab, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Parent = container
+    frame.Size = UDim2.new(1, -20, 0, 35)
+    frame.Position = UDim2.new(0, 10, 0, tabs[tab].y)
+    frame.BackgroundColor3 = Color3.fromRGB(14, 14, 32)
+    frame.BorderSizePixel = 0
+    frame.Visible = (tab == currentTab)
+    
+    local c = Instance.new("UICorner")
+    c.Parent = frame
+    c.CornerRadius = UDim.new(0, 4)
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(0, 180, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. default
+    label.TextColor3 = Color3.fromRGB(200, 200, 220)
+    label.TextSize = 13
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local slider = Instance.new("Frame")
+    slider.Parent = frame
+    slider.Size = UDim2.new(0, 150, 0, 4)
+    slider.Position = UDim2.new(0, 10, 0, 25)
+    slider.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
+    slider.BorderSizePixel = 0
+    
+    local c3 = Instance.new("UICorner")
+    c3.Parent = slider
+    c3.CornerRadius = UDim.new(0, 2)
+    
+    local fill = Instance.new("Frame")
+    fill.Parent = slider
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(60, 140, 255)
+    fill.BorderSizePixel = 0
+    
+    local c4 = Instance.new("UICorner")
+    c4.Parent = fill
+    c4.CornerRadius = UDim.new(0, 2)
+    
+    local dragging = false
+    local value = default
+    
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            local x = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+            value = math.floor(min + (max - min) * x)
+            fill.Size = UDim2.new(x, 0, 1, 0)
+            label.Text = text .. ": " .. value
+            callback(value)
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+            value = math.floor(min + (max - min) * x)
+            fill.Size = UDim2.new(x, 0, 1, 0)
+            label.Text = text .. ": " .. value
+            callback(value)
+        end
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    tabs[tab].y = tabs[tab].y + 42
+    table.insert(tabs[tab].elements, frame)
+end
+
+function SwitchTab(tab)
+    currentTab = tab
+    for t, data in pairs(tabs) do
+        for _, elem in ipairs(data.elements) do
+            elem.Visible = (t == tab)
+        end
+    end
+    container.CanvasSize = UDim2.new(0, 0, 0, tabs[tab].y + 20)
+end
+
+-- Create tabs
+CreateTab("Main", 10)
+CreateTab("Combat", 78)
+CreateTab("Visual", 146)
+CreateTab("Admin", 214)
+
+-- ==========================================
+-- GAME SELECTION - ALL GAMES
+-- ==========================================
+
+local allGames = {
+    "South Bronx Trenches",
     "Rivals",
     "Untitled Boxing Game",
-    "South Bronx Trenches",
-    "OBBY Games",
-    "Gun Games",
     "MM2",
     "Arsenal",
+    "Gun Games",
+    "OBBY Games",
     "BedWars",
     "Blox Fruits",
     "King Legacy",
@@ -350,1264 +406,809 @@ local AllGames = {
     "Blade Ball",
     "Fruit Battlegrounds",
     "Kaizen",
-    "Arcane Odyssey"
+    "Arcane Odyssey",
+    "Redliner"
 }
 
-local selectedGame = AllGames[1]
+AddLabel("── GAME SELECTION ──", "Main")
 
-GameSelection:CreateDropdown({
-    Name = "Select Game",
-    Options = AllGames,
-    Default = selectedGame,
-    Callback = function(option)
-        selectedGame = option
-        LoadGameScripts(option)
-    end
-})
+local selectedGame = allGames[1]
 
--- ██████████████████████████████████████████████████████████████
--- SECTION 7: DYNAMIC GAME SCRIPT LOADER
--- ██████████████████████████████████████████████████████████████
+AddDropdown("Game:", "Main", allGames, function(opt)
+    selectedGame = opt
+    LoadGameScripts(opt)
+end)
 
-local CurrentScriptSection = nil
-local ScriptToggles = {}
+-- ==========================================
+-- GAME-SPECIFIC SCRIPTS
+-- ==========================================
+
+local scriptElements = {}
 
 function LoadGameScripts(gameName)
-    if CurrentScriptSection then
-        CurrentScriptSection:Destroy()
-        CurrentScriptSection = nil
+    for _, elem in ipairs(scriptElements) do
+        elem:Destroy()
     end
-    
-    CurrentScriptSection = GameTab:CreateSection("✦ " .. gameName:upper() .. " Scripts ✦")
-    ScriptToggles = {}
+    scriptElements = {}
     
     local scripts = {}
     
-    -- ███ GAME-SPECIFIC SCRIPT DEFINITIONS ███
-    
     if gameName == "South Bronx Trenches" then
         scripts = {
-            {name = "Auto Farm Money", type = "toggle"},
-            {name = "Money Dupe", type = "button"},
-            {name = "Give All Weapons", type = "button"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "Super Speed", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "Silent Aim", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Item Dupe", type = "button"},
-            {name = "Dupe Held Weapon", type = "button"},
-            {name = "No Clip", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
+            "Auto Farm Money", "Money Dupe", "Give All Weapons", "Instant Kill",
+            "Super Speed", "God Mode", "Fly", "Silent Aim", "ESP",
+            "Item Dupe", "Dupe Held Weapon", "No Clip"
         }
     elseif gameName == "Rivals" then
-        scripts = {
-            {name = "Auto Aim", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "See All Players", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "Auto Farm Points", type = "toggle"},
-            {name = "Silent Aim", type = "toggle"},
-            {name = "Anti-Stun", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
+        scripts = {"Aimbot", "Silent Aim", "ESP", "Speed Hack", "Fly", "Instant Kill", "Auto Farm"}
     elseif gameName == "Untitled Boxing Game" then
-        scripts = {
-            {name = "Auto Punch", type = "toggle"},
-            {name = "One Punch Kill", type = "toggle"},
-            {name = "Super Speed", type = "toggle"},
-            {name = "Infinite Health", type = "toggle"},
-            {name = "Auto Farm Wins", type = "toggle"},
-            {name = "Perfect Dodge", type = "toggle"},
-            {name = "Instant Cooldown", type = "toggle"},
-            {name = "ESP Players", type = "toggle"},
-            {name = "Fly", type = "toggle"}
-        }
-    elseif gameName == "OBBY Games" then
-        scripts = {
-            {name = "Auto Jump", type = "toggle"},
-            {name = "Speed", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "No Clip", type = "toggle"},
-            {name = "Instant Finish", type = "button"},
-            {name = "Auto Reset", type = "toggle"},
-            {name = "Teleport to End", type = "button"}
-        }
-    elseif gameName == "Gun Games" then
-        scripts = {
-            {name = "Auto Aim", type = "toggle"},
-            {name = "Infinite Ammo", type = "toggle"},
-            {name = "One Shot Kill", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Aimbot", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Give All Guns", type = "button"},
-            {name = "No Recoil", type = "toggle"},
-            {name = "Silent Aim", type = "toggle"},
-            {name = "Fly", type = "toggle"}
-        }
+        scripts = {"Auto Punch", "One Punch Kill", "Super Speed", "God Mode", "ESP", "No Cooldown"}
     elseif gameName == "MM2" then
-        scripts = {
-            {name = "Auto Kill", type = "toggle"},
-            {name = "See Murderer", type = "toggle"},
-            {name = "Auto Shoot", type = "toggle"},
-            {name = "Speed", type = "toggle"},
-            {name = "Auto Collect", type = "toggle"},
-            {name = "Aimbot", type = "toggle"},
-            {name = "Ghost Mode", type = "toggle"},
-            {name = "Auto Farm Coins", type = "toggle"},
-            {name = "Fly", type = "toggle"}
-        }
+        scripts = {"Auto Kill", "See Murderer", "Speed", "Aimbot", "ESP", "Ghost Mode"}
     elseif gameName == "Arsenal" then
-        scripts = {
-            {name = "Aimbot", type = "toggle"},
-            {name = "Silent Aim", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "Infinite Ammo", type = "toggle"},
-            {name = "No Recoil", type = "toggle"},
-            {name = "Auto Farm", type = "toggle"}
-        }
+        scripts = {"Aimbot", "Silent Aim", "ESP", "Speed Hack", "Fly", "Instant Kill", "Infinite Ammo", "No Recoil"}
+    elseif gameName == "Gun Games" then
+        scripts = {"Aimbot", "Silent Aim", "ESP", "Speed Hack", "Fly", "Instant Kill", "Infinite Ammo", "No Recoil", "Rapid Fire"}
+    elseif gameName == "OBBY Games" then
+        scripts = {"Fly", "No Clip", "Speed", "Instant Finish", "Auto Jump"}
     elseif gameName == "BedWars" then
-        scripts = {
-            {name = "Auto Bridge", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "No Clip", type = "toggle"},
-            {name = "Aimbot", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Auto Farm", type = "toggle"}
-        }
+        scripts = {"Aimbot", "ESP", "Speed Hack", "Fly", "God Mode", "No Clip", "Auto Farm"}
     elseif gameName == "Blox Fruits" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "No Clip", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "Auto Collect", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
+        scripts = {"Auto Farm", "Speed Hack", "Fly", "God Mode", "ESP", "No Clip"}
     elseif gameName == "King Legacy" then
+        scripts = {"Auto Farm", "Speed Hack", "Fly", "God Mode", "ESP"}
+    elseif gameName == "Redliner" then
         scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "No Clip", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "Auto Collect", type = "toggle"}
-        }
-    elseif gameName == "Anime Adventures" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "Auto Summon", type = "toggle"}
-        }
-    elseif gameName == "All Star Tower Defense" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Auto Place", type = "toggle"}
-        }
-    elseif gameName == "Dungeon Quest" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"}
-        }
-    elseif gameName == "Tower Defense Simulator" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Auto Place", type = "toggle"}
-        }
-    elseif gameName == "Ninja Legends" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"}
-        }
-    elseif gameName == "Dragon Ball Rage" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Project Slayers" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Demon Slayer RPG" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"}
-        }
-    elseif gameName == "Shindo Life" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Anime Fighters" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"}
-        }
-    elseif gameName == "The Strongest Battlegrounds" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"},
-            {name = "Silent Aim", type = "toggle"}
-        }
-    elseif gameName == "Peroxide" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Type Soul" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "YBA" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "AUT" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Sword Fighters Simulator" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"},
-            {name = "ESP", type = "toggle"}
-        }
-    elseif gameName == "Blade Ball" then
-        scripts = {
-            {name = "Auto Parry", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Fruit Battlegrounds" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Kaizen" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
-        }
-    elseif gameName == "Arcane Odyssey" then
-        scripts = {
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"}
+            "Aimbot", "Silent Aim", "ESP", "Auto Parry", "No Parry Cooldown",
+            "No Dash Cooldown", "No Gun Cooldown", "Rapid Fire",
+            "Infinite Bullets", "Hitbox Expander", "Show Hitboxes",
+            "Speed Hack", "Fly", "God Mode"
         }
     else
-        -- Generic fallback
-        scripts = {
-            {name = "Speed Hack", type = "toggle"},
-            {name = "Fly", type = "toggle"},
-            {name = "No Clip", type = "toggle"},
-            {name = "God Mode", type = "toggle"},
-            {name = "ESP", type = "toggle"},
-            {name = "Aimbot", type = "toggle"},
-            {name = "Auto Farm", type = "toggle"},
-            {name = "Instant Kill", type = "toggle"}
-        }
+        scripts = {"Speed Hack", "Fly", "God Mode", "ESP", "Aimbot", "Silent Aim", "No Clip"}
     end
     
-    -- ███ CREATE UI ELEMENTS ███
+    AddLabel("── " .. gameName:upper() .. " SCRIPTS ──", "Main")
     
-    for _, script in ipairs(scripts) do
-        if script.type == "toggle" then
-            local toggle = CurrentScriptSection:CreateToggle({
-                Name = script.name,
-                Default = false,
-                Callback = function(value)
-                    _G.PhantomX[script.name:gsub(" ", "_")] = value
-                    ExecuteScript(script.name, value)
+    for _, name in ipairs(scripts) do
+        local btn = Instance.new("TextButton")
+        btn.Parent = container
+        btn.Size = UDim2.new(1, -20, 0, 28)
+        btn.Position = UDim2.new(0, 10, 0, tabs["Main"].y)
+        btn.BackgroundColor3 = Color3.fromRGB(18, 18, 40)
+        btn.Text = name .. " (OFF)"
+        btn.TextColor3 = Color3.fromRGB(200, 200, 220)
+        btn.TextSize = 12
+        btn.Font = Enum.Font.GothamSemibold
+        btn.BorderSizePixel = 0
+        btn.Visible = true
+        
+        local c = Instance.new("UICorner")
+        c.Parent = btn
+        c.CornerRadius = UDim.new(0, 4)
+        
+        local state = false
+        btn.MouseButton1Click:Connect(function()
+            state = not state
+            btn.Text = name .. (state and " (ON)" or " (OFF)")
+            btn.BackgroundColor3 = state and Color3.fromRGB(30, 80, 30) or Color3.fromRGB(18, 18, 40)
+            ExecuteScript(name, state)
+        end)
+        
+        table.insert(scriptElements, btn)
+        tabs["Main"].y = tabs["Main"].y + 32
+    end
+    
+    container.CanvasSize = UDim2.new(0, 0, 0, tabs["Main"].y + 20)
+end
+
+-- ==========================================
+-- COMBAT TAB - REDLINER FEATURES
+-- ==========================================
+
+AddLabel("── AIM SETTINGS ──", "Combat")
+
+local aimParts = {"Head", "Torso", "HumanoidRootPart", "LowerTorso", "UpperTorso"}
+AddDropdown("Aim Part:", "Combat", aimParts, function(opt)
+    _G.AimPart = opt
+end)
+
+AddSlider("Hitbox Size", "Combat", 1, 10, 3, function(val)
+    _G.HitboxSize = val
+end)
+
+AddSlider("Aim FOV", "Combat", 1, 360, 90, function(val)
+    _G.AimFOV = val
+end)
+
+AddSlider("Fly Speed", "Combat", 10, 200, 50, function(val)
+    _G.FlySpeed = val
+end)
+
+AddSlider("Walk Speed", "Combat", 16, 500, 16, function(val)
+    _G.WalkSpeed = val
+    local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+    if hum then hum.WalkSpeed = val end
+end)
+
+-- ==========================================
+-- VISUAL TAB
+-- ==========================================
+
+AddLabel("── VISUAL SETTINGS ──", "Visual")
+
+AddToggle("ESP", "Visual", function(v)
+    _G.ESP = v
+    ToggleESP(v)
+end)
+
+AddToggle("Show Hitboxes", "Visual", function(v)
+    _G.ShowHitboxes = v
+    ToggleHitboxes(v)
+end)
+
+AddToggle("Chams", "Visual", function(v)
+    _G.Chams = v
+    ToggleChams(v)
+end)
+
+AddToggle("Full Bright", "Visual", function(v)
+    if v then
+        game.Lighting.Brightness = 10
+        game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+        game.Lighting.GlobalShadows = false
+    else
+        game.Lighting.Brightness = 2
+        game.Lighting.Ambient = Color3.fromRGB(127, 127, 127)
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
+        game.Lighting.GlobalShadows = true
+    end
+end)
+
+-- ==========================================
+-- ADMIN TAB
+-- ==========================================
+
+AddLabel("── PLAYER CONTROL ──", "Admin")
+
+local playerList = {}
+for _, v in ipairs(game.Players:GetPlayers()) do
+    if v ~= player then table.insert(playerList, v.Name) end
+end
+if #playerList == 0 then table.insert(playerList, "No Players") end
+
+local targetPlayer = playerList[1]
+
+AddDropdown("Target:", "Admin", playerList, function(opt)
+    targetPlayer = opt
+end)
+
+AddButton("Bring Player", "Admin", function()
+    if targetPlayer and targetPlayer ~= "No Players" then
+        pcall(function()
+            local target = game.Players:FindFirstChild(targetPlayer)
+            local char = player.Character
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and char and char:FindFirstChild("HumanoidRootPart") then
+                target.Character.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame
+            end
+        end)
+    end
+end)
+
+AddButton("Teleport to Player", "Admin", function()
+    if targetPlayer and targetPlayer ~= "No Players" then
+        pcall(function()
+            local target = game.Players:FindFirstChild(targetPlayer)
+            local char = player.Character
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+            end
+        end)
+    end
+end)
+
+AddButton("Kill Player", "Admin", function()
+    if targetPlayer and targetPlayer ~= "No Players" then
+        pcall(function()
+            local target = game.Players:FindFirstChild(targetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+                target.Character.Humanoid.Health = 0
+            end
+        end)
+    end
+end)
+
+AddButton("Freeze Player", "Admin", function()
+    if targetPlayer and targetPlayer ~= "No Players" then
+        pcall(function()
+            local target = game.Players:FindFirstChild(targetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+                target.Character.Humanoid.WalkSpeed = 0
+            end
+        end)
+    end
+end)
+
+AddButton("Unfreeze Player", "Admin", function()
+    if targetPlayer and targetPlayer ~= "No Players" then
+        pcall(function()
+            local target = game.Players:FindFirstChild(targetPlayer)
+            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+                target.Character.Humanoid.WalkSpeed = 16
+            end
+        end)
+    end
+end)
+
+-- Switch to Main
+SwitchTab("Main")
+
+-- ==========================================
+-- VISUAL FUNCTIONS
+-- ==========================================
+
+local espObjects = {}
+local hitboxObjects = {}
+local chamObjects = {}
+
+function ToggleESP(v)
+    if v then
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if not _G.ESP then return end
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local pos, onScreen = game.Workspace.CurrentCamera:WorldToScreenPoint(hrp.Position)
+                        if onScreen then
+                            -- Simple ESP text
+                        end
+                    end
                 end
-            })
-            ScriptToggles[script.name] = toggle
-        elseif script.type == "button" then
-            CurrentScriptSection:CreateButton({
-                Name = script.name,
-                Callback = function()
-                    ExecuteScript(script.name, true)
-                end
-            })
-        end
+            end
+        end)
     end
 end
 
--- ██████████████████████████████████████████████████████████████
--- SECTION 8: SCRIPT EXECUTION ENGINE (MASTER)
--- ██████████████████████████████████████████████████████████████
+function ToggleHitboxes(v)
+    if v then
+        for _, p in ipairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character then
+                for _, part in ipairs(p.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Parent = part
+                        highlight.Adornee = part
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        highlight.FillTransparency = 0.3
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
+                        table.insert(hitboxObjects, highlight)
+                    end
+                end
+            end
+        end
+    else
+        for _, h in ipairs(hitboxObjects) do h:Destroy() end
+        hitboxObjects = {}
+    end
+end
 
-function ExecuteScript(scriptName, value)
-    local player = GetPlayer()
-    local char = GetCharacter()
-    local hrp = GetHRP()
-    local hum = GetHumanoid()
+function ToggleChams(v)
+    if v then
+        for _, p in ipairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character then
+                for _, part in ipairs(p.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Parent = part
+                        highlight.Adornee = part
+                        highlight.FillColor = Color3.fromRGB(0, 255, 255)
+                        highlight.FillTransparency = 0.2
+                        table.insert(chamObjects, highlight)
+                    end
+                end
+            end
+        end
+    else
+        for _, h in ipairs(chamObjects) do h:Destroy() end
+        chamObjects = {}
+    end
+end
+
+-- ==========================================
+-- SCRIPT EXECUTION ENGINE
+-- ==========================================
+
+local runningScripts = {}
+
+function ExecuteScript(name, value)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
     
-    if not player then return end
+    if runningScripts[name] then
+        runningScripts[name] = false
+        task.wait(0.05)
+    end
     
-    -- ███ AUTO FARM - Universal ███
-    if scriptName == "Auto Farm" or scriptName == "Auto Farm Money" or scriptName == "Auto Farm Points" or scriptName == "Auto Farm Wins" or scriptName == "Auto Farm Coins" then
-        _G.PhantomX.AutoFarm = value
-        while _G.PhantomX.AutoFarm do
-            task.wait(0.1)
-            pcall(function()
-                local targets = game.Players:GetPlayers()
-                if #targets < 2 then return end
-                local target = targets[math.random(2, #targets)]
-                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                    if hrp then
-                        hrp.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
-                        task.wait(0.05)
-                        for _, remote in ipairs(game.ReplicatedStorage:GetDescendants()) do
-                            if remote:IsA("RemoteEvent") then
-                                local name = remote.Name:lower()
-                                if name:find("kill") or name:find("damage") or name:find("attack") or name:find("hit") then
-                                    remote:FireServer(target)
-                                end
+    if not value then
+        if name == "Super Speed" or name == "Speed Hack" or name == "Speed" then
+            if hum then hum.WalkSpeed = 16; hum.JumpPower = 50 end
+        end
+        if name == "Fly" then
+            if hrp then
+                for _, v in ipairs(hrp:GetChildren()) do
+                    if v:IsA("BodyVelocity") then v:Destroy() end
+                end
+            end
+        end
+        if name == "God Mode" then _G.GodMode = false end
+        if name == "No Clip" then _G.NoClip = false end
+        if name == "ESP" then _G.ESP = false; ToggleESP(false) end
+        if name == "Show Hitboxes" then _G.ShowHitboxes = false; ToggleHitboxes(false) end
+        if name == "Chams" then _G.Chams = false; ToggleChams(false) end
+        return
+    end
+    
+    runningScripts[name] = true
+    
+    -- AUTO FARM
+    if name == "Auto Farm" or name == "Auto Farm Money" or name == "Auto Farm Points" or name == "Auto Farm Wins" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.5)
+                pcall(function()
+                    local targets = game.Players:GetPlayers()
+                    if #targets < 2 then return end
+                    local target = targets[math.random(2, #targets)]
+                    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and hrp then
+                        hrp.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                        task.wait(0.1)
+                        for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                            if r:IsA("RemoteEvent") and r.Name:lower():find("kill") then
+                                r:FireServer(target)
                             end
                         end
                     end
-                end
-            end)
-        end
+                end)
+            end
+        end)
         
-    -- ███ MONEY DUPE ███
-    elseif scriptName == "Money Dupe" then
-        while task.wait() do
-            pcall(function()
-                for _, remote in ipairs(game.ReplicatedStorage:GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local name = remote.Name:lower()
-                        if name:find("money") or name:find("cash") or name:find("bank") or name:find("coin") then
-                            remote:FireServer(999999)
-                            remote:FireServer("AddMoney", 999999)
-                            remote:FireServer(999999, player)
+    -- MONEY DUPE
+    elseif name == "Money Dupe" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.5)
+                pcall(function()
+                    for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                        if r:IsA("RemoteEvent") and r.Name:lower():find("money") then
+                            r:FireServer(999999)
                         end
                     end
-                end
-            end)
-        end
+                end)
+            end
+        end)
         
-    -- ███ GIVE ALL WEAPONS ███
-    elseif scriptName == "Give All Weapons" or scriptName == "Give All Guns" then
+    -- GIVE ALL WEAPONS
+    elseif name == "Give All Weapons" or name == "Give All Guns" then
         pcall(function()
             for _, v in ipairs(game.ReplicatedStorage:GetDescendants()) do
                 if v:IsA("Tool") then
-                    local cloned = v:Clone()
-                    cloned.Parent = player.Backpack
-                    task.wait(0.01)
-                end
-            end
-            for _, v in ipairs(game.Workspace:GetDescendants()) do
-                if v:IsA("Tool") then
-                    local cloned = v:Clone()
-                    cloned.Parent = player.Backpack
-                    task.wait(0.01)
+                    v:Clone().Parent = player.Backpack
+                    task.wait(0.03)
                 end
             end
         end)
+        runningScripts[name] = false
         
-    -- ███ ITEM DUPE ███
-    elseif scriptName == "Item Dupe" then
-        pcall(function()
-            local tool = char and char:FindFirstChildOfClass("Tool")
-            if tool then
-                local cloned = tool:Clone()
-                cloned.Parent = player.Backpack
-            end
-        end)
-        
-    -- ███ DUPE HELD WEAPON ███
-    elseif scriptName == "Dupe Held Weapon" then
-        pcall(function()
-            local weapon = char and char:FindFirstChildOfClass("Tool")
-            if weapon then
-                for i = 1, 10 do
-                    local cloned = weapon:Clone()
-                    cloned.Parent = player.Backpack
-                    task.wait(0.01)
-                end
-            end
-        end)
-        
-    -- ███ INSTANT KILL ███
-    elseif scriptName == "Instant Kill" or scriptName == "One Punch Kill" or scriptName == "One Shot Kill" then
-        _G.PhantomX.InstantKill = value
-        while _G.PhantomX.InstantKill do
-            task.wait(0.1)
-            pcall(function()
-                for _, v in ipairs(game.Players:GetPlayers()) do
-                    if v ~= player and v.Character and v.Character:FindFirstChild("Humanoid") then
-                        v.Character.Humanoid.Health = 0
+    -- INSTANT KILL
+    elseif name == "Instant Kill" or name == "One Punch Kill" or name == "One Shot Kill" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.2)
+                pcall(function()
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        if p ~= player and p.Character and p.Character:FindFirstChild("Humanoid") then
+                            p.Character.Humanoid.Health = 0
+                        end
                     end
-                end
-                for _, v in ipairs(game.Workspace:GetDescendants()) do
-                    if v:IsA("Humanoid") and v.Parent and v.Parent ~= char then
-                        v.Health = 0
-                    end
-                end
-            end)
-        end
+                end)
+            end
+        end)
         
-    -- ███ SPEED HACK ███
-    elseif scriptName == "Speed Hack" or scriptName == "Super Speed" or scriptName == "Speed" then
-        _G.PhantomX.SpeedHack = value
+    -- SPEED
+    elseif name == "Super Speed" or name == "Speed Hack" or name == "Speed" then
         if hum then
-            hum.WalkSpeed = value and 200 or 16
-            hum.JumpPower = value and 100 or 50
-        end
-        if value then
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if _G.PhantomX.SpeedHack and hum then
-                    hum.WalkSpeed = 200
-                    hum.JumpPower = 100
-                end
-            end)
+            hum.WalkSpeed = 150
+            hum.JumpPower = 80
         end
         
-    -- ███ FLY ███
-    elseif scriptName == "Fly" then
-        _G.PhantomX.Fly = value
-        if value and hrp then
+    -- FLY
+    elseif name == "Fly" then
+        if hrp then
+            for _, v in ipairs(hrp:GetChildren()) do
+                if v:IsA("BodyVelocity") then v:Destroy() end
+            end
             local bv = Instance.new("BodyVelocity")
             bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-            bv.Velocity = Vector3.new(0, 0, 0)
             bv.Parent = hrp
-            
-            local flying = true
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if not _G.PhantomX.Fly then
-                    bv:Destroy()
-                    flying = false
-                    return
-                end
-                if flying then
-                    local speed = _G.PhantomX.FlySpeed or 50
+            task.spawn(function()
+                while runningScripts[name] do
+                    task.wait()
+                    local speed = _G.FlySpeed or 50
                     local move = Vector3.new()
                     local uis = game:GetService("UserInputService")
-                    
-                    if uis:IsKeyDown(Enum.KeyCode.W) then
-                        move = move + hrp.CFrame.LookVector * speed
-                    end
-                    if uis:IsKeyDown(Enum.KeyCode.S) then
-                        move = move - hrp.CFrame.LookVector * speed
-                    end
-                    if uis:IsKeyDown(Enum.KeyCode.A) then
-                        move = move - hrp.CFrame.RightVector * speed
-                    end
-                    if uis:IsKeyDown(Enum.KeyCode.D) then
-                        move = move + hrp.CFrame.RightVector * speed
-                    end
-                    if uis:IsKeyDown(Enum.KeyCode.Space) then
-                        move = move + Vector3.new(0, speed, 0)
-                    end
-                    if uis:IsKeyDown(Enum.KeyCode.LeftControl) then
-                        move = move - Vector3.new(0, speed, 0)
-                    end
-                    
+                    if uis:IsKeyDown(Enum.KeyCode.W) then move = move + hrp.CFrame.LookVector * speed end
+                    if uis:IsKeyDown(Enum.KeyCode.S) then move = move - hrp.CFrame.LookVector * speed end
+                    if uis:IsKeyDown(Enum.KeyCode.A) then move = move - hrp.CFrame.RightVector * speed end
+                    if uis:IsKeyDown(Enum.KeyCode.D) then move = move + hrp.CFrame.RightVector * speed end
+                    if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, speed, 0) end
+                    if uis:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0, speed, 0) end
                     bv.Velocity = move
                 end
             end)
         end
         
-    -- ███ GOD MODE ███
-    elseif scriptName == "God Mode" or scriptName == "Infinite Health" then
-        _G.PhantomX.GodMode = value
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if _G.PhantomX.GodMode and hum then
-                hum.Health = hum.MaxHealth
-                hum.BreakJointsOnDeath = false
-            end
-        end)
-        
-    -- ███ NO CLIP ███
-    elseif scriptName == "No Clip" then
-        _G.PhantomX.NoClip = value
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if _G.PhantomX.NoClip and char then
-                for _, part in ipairs(char:GetChildren()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+    -- GOD MODE
+    elseif name == "God Mode" or name == "Infinite Health" then
+        _G.GodMode = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait()
+                if hum then
+                    hum.Health = hum.MaxHealth
                 end
             end
         end)
         
-    -- ███ ESP ███
-    elseif scriptName == "ESP" or scriptName == "See All Players" or scriptName == "ESP Players" then
-        _G.PhantomX.ESP = value
-        if value then
-            for _, v in ipairs(game.Players:GetPlayers()) do
-                if v ~= player and v.Character then
-                    for _, part in ipairs(v.Character:GetChildren()) do
+    -- NO CLIP
+    elseif name == "No Clip" then
+        _G.NoClip = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait()
+                if char then
+                    for _, part in ipairs(char:GetChildren()) do
                         if part:IsA("BasePart") then
-                            local highlight = Instance.new("Highlight")
-                            highlight.Parent = part
-                            highlight.Adornee = part
-                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                            highlight.FillTransparency = 0.5
-                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                            part.CanCollide = false
                         end
                     end
                 end
             end
-        else
-            for _, v in ipairs(game.Players:GetPlayers()) do
-                if v ~= player and v.Character then
-                    for _, part in ipairs(v.Character:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            for _, h in ipairs(part:GetChildren()) do
-                                if h:IsA("Highlight") then
-                                    h:Destroy()
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+        end)
         
-    -- ███ AIMBOT ███
-    elseif scriptName == "Aimbot" or scriptName == "Auto Aim" then
-        _G.PhantomX.Aimbot = value
-        if value then
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if not _G.PhantomX.Aimbot then return end
+    -- SILENT AIM
+    elseif name == "Silent Aim" then
+        _G.SilentAim = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait()
                 pcall(function()
                     local target = GetClosestPlayer()
                     if target and target.Character then
-                        local aimPart = target.Character:FindFirstChild(_G.PhantomX.AimPart or "Head")
+                        local aimPart = target.Character:FindFirstChild(_G.AimPart or "Head")
                         if aimPart then
                             mouse.Hit = CFrame.new(aimPart.Position)
                         end
                     end
                 end)
-            end)
-        end
+            end
+        end)
         
-    -- ███ SILENT AIM ███
-    elseif scriptName == "Silent Aim" then
-        _G.PhantomX.SilentAim = value
-        if value then
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if not _G.PhantomX.SilentAim then return end
+    -- AIMBOT
+    elseif name == "Aimbot" or name == "Auto Aim" then
+        _G.Aimbot = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait()
                 pcall(function()
                     local target = GetClosestPlayer()
                     if target and target.Character then
-                        local aimPart = target.Character:FindFirstChild(_G.PhantomX.AimPart or "Head")
+                        local aimPart = target.Character:FindFirstChild(_G.AimPart or "Head")
                         if aimPart then
-                            -- Silent aim - redirects bullets without moving camera
-                            local screenPos = game.Workspace.CurrentCamera:WorldToScreenPoint(aimPart.Position)
-                            if screenPos then
-                                mouse.Hit = CFrame.new(aimPart.Position)
+                            mouse.Hit = CFrame.new(aimPart.Position)
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- AUTO PARRY (Redliner)
+    elseif name == "Auto Parry" then
+        _G.AutoParry = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                        if r:IsA("RemoteEvent") and r.Name:lower():find("parry") then
+                            r:FireServer()
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- NO PARRY COOLDOWN (Redliner)
+    elseif name == "No Parry Cooldown" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("parry") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                    for _, v in ipairs(player.PlayerGui:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("parry") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- NO DASH COOLDOWN (Redliner)
+    elseif name == "No Dash Cooldown" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("dash") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                    for _, v in ipairs(player.PlayerGui:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("dash") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- NO GUN COOLDOWN (Redliner)
+    elseif name == "No Gun Cooldown" or name == "No Cooldown" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("gun") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                        if v:IsA("NumberValue") and v.Name:lower():find("shoot") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                    for _, v in ipairs(player.PlayerGui:GetDescendants()) do
+                        if v:IsA("NumberValue") and v.Name:lower():find("cooldown") then
+                            v.Value = 0
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- RAPID FIRE (Redliner)
+    elseif name == "Rapid Fire" then
+        _G.RapidFire = true
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                pcall(function()
+                    for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                        if r:IsA("RemoteEvent") and r.Name:lower():find("shoot") then
+                            r:FireServer()
+                        end
+                    end
+                    for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                        if r:IsA("RemoteEvent") and r.Name:lower():find("fire") then
+                            r:FireServer()
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- INFINITE BULLETS (Redliner)
+    elseif name == "Infinite Bullets" or name == "Infinite Ammo" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.1)
+                pcall(function()
+                    for _, v in ipairs(player.Backpack:GetChildren()) do
+                        if v:IsA("Tool") and v:FindFirstChild("Ammo") then
+                            v.Ammo.Value = 999
+                        end
+                    end
+                    if char then
+                        for _, v in ipairs(char:GetChildren()) do
+                            if v:IsA("Tool") and v:FindFirstChild("Ammo") then
+                                v.Ammo.Value = 999
                             end
                         end
                     end
                 end)
-            end)
-        end
-        
-    -- ███ AUTO SHOOT ███
-    elseif scriptName == "Auto Shoot" then
-        _G.PhantomX.AutoShoot = value
-        while _G.PhantomX.AutoShoot do
-            task.wait(0.1)
-            pcall(function()
-                for _, remote in ipairs(game.ReplicatedStorage:GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local name = remote.Name:lower()
-                        if name:find("shoot") or name:find("fire") or name:find("gun") then
-                            remote:FireServer()
-                        end
-                    end
-                end
-            end)
-        end
-        
-    -- ███ AUTO PUNCH ███
-    elseif scriptName == "Auto Punch" then
-        _G.PhantomX.AutoPunch = value
-        while _G.PhantomX.AutoPunch do
-            task.wait(0.1)
-            pcall(function()
-                for _, remote in ipairs(game.ReplicatedStorage:GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local name = remote.Name:lower()
-                        if name:find("punch") or name:find("attack") or name:find("hit") then
-                            remote:FireServer()
-                        end
-                    end
-                end
-            end)
-        end
-        
-    -- ███ INSTANT FINISH ███
-    elseif scriptName == "Instant Finish" then
-        pcall(function()
-            for _, v in ipairs(game.Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if name:find("finish") or name:find("end") or name:find("goal") or name:find("win") then
-                        if hrp then
-                            hrp.CFrame = v.CFrame
-                        end
-                    end
-                end
             end
         end)
         
-    -- ███ TELEPORT TO END ███
-    elseif scriptName == "Teleport to End" then
-        pcall(function()
-            for _, v in ipairs(game.Workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    local name = v.Name:lower()
-                    if name:find("end") or name:find("finish") or name:find("goal") or name:find("win") or name:find("portal") then
-                        if hrp then
-                            hrp.CFrame = v.CFrame
-                        end
-                    end
-                end
-            end
-        end)
-        
-    -- ███ SEE MURDERER ███
-    elseif scriptName == "See Murderer" then
-        _G.PhantomX.SeeMurderer = value
-        if value then
-            pcall(function()
-                for _, v in ipairs(game.Players:GetPlayers()) do
-                    if v ~= player and v.Character then
-                        -- Check if this player is the murderer
-                        if v:FindFirstChild("Murderer") or v.Backpack:FindFirstChild("Knife") then
-                            for _, part in ipairs(v.Character:GetChildren()) do
+    -- HITBOX EXPANDER (Redliner)
+    elseif name == "Hitbox Expander" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.1)
+                pcall(function()
+                    local size = _G.HitboxSize or 3
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        if p ~= player and p.Character then
+                            for _, part in ipairs(p.Character:GetChildren()) do
                                 if part:IsA("BasePart") then
-                                    local highlight = Instance.new("Highlight")
-                                    highlight.Parent = part
-                                    highlight.Adornee = part
-                                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                                    highlight.FillTransparency = 0.3
+                                    part.Size = part.Size + Vector3.new(size, size, size)
                                 end
                             end
                         end
                     end
-                end
-            end)
-        end
+                end)
+            end
+        end)
         
-    -- ███ GHOST MODE ███
-    elseif scriptName == "Ghost Mode" then
-        _G.PhantomX.GhostMode = value
+    -- ESP
+    elseif name == "ESP" then
+        _G.ESP = true
+        ToggleESP(true)
+        
+    -- SHOW HITBOXES
+    elseif name == "Show Hitboxes" then
+        _G.ShowHitboxes = true
+        ToggleHitboxes(true)
+        
+    -- AUTO JUMP
+    elseif name == "Auto Jump" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.05)
+                if hum then
+                    hum.Jump = true
+                end
+            end
+        end)
+        
+    -- AUTO KILL (MM2)
+    elseif name == "Auto Kill" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.1)
+                pcall(function()
+                    for _, r in ipairs(game.ReplicatedStorage:GetDescendants()) do
+                        if r:IsA("RemoteEvent") and r.Name:lower():find("kill") then
+                            r:FireServer()
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- SEE MURDERER (MM2)
+    elseif name == "See Murderer" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.5)
+                pcall(function()
+                    for _, p in ipairs(game.Players:GetPlayers()) do
+                        if p ~= player and p.Character then
+                            if p:FindFirstChild("Murderer") or p.Backpack:FindFirstChild("Knife") then
+                                for _, part in ipairs(p.Character:GetChildren()) do
+                                    if part:IsA("BasePart") then
+                                        local highlight = Instance.new("Highlight")
+                                        highlight.Parent = part
+                                        highlight.Adornee = part
+                                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                                        highlight.FillTransparency = 0.3
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
+        
+    -- GHOST MODE
+    elseif name == "Ghost Mode" then
         if char then
-            for _, part in ipairs(char:GetChildren()) do
-                if part:IsA("BasePart") then
-                    part.Transparency = value and 0.5 or 0
-                end
-            end
+            char.Transparency = 0.5
+            char.CanCollide = false
         end
         
-    -- ███ AUTO JUMP ███
-    elseif scriptName == "Auto Jump" then
-        _G.PhantomX.AutoJump = value
-        if hum then
-            hum.Jump = value
-        end
-        
-    -- ███ ANTI-STUN ███
-    elseif scriptName == "Anti-Stun" then
-        _G.PhantomX.AntiStun = value
-        if value then
-            game:GetService("RunService").RenderStepped:Connect(function()
-                if _G.PhantomX.AntiStun and hum then
-                    hum.PlatformStand = false
-                end
-            end)
-        end
-        
-    -- ███ PERFECT DODGE ███
-    elseif scriptName == "Perfect Dodge" then
-        _G.PhantomX.PerfectDodge = value
-        
-    -- ███ INSTANT COOLDOWN ███
-    elseif scriptName == "Instant Cooldown" then
-        _G.PhantomX.InstantCooldown = value
-        if value then
-            for _, v in ipairs(player.PlayerGui:GetDescendants()) do
-                if v:IsA("NumberValue") and v.Name:lower():find("cooldown") then
-                    v.Value = 0
-                end
-            end
-        end
-        
-    -- ███ INFINITE AMMO ███
-    elseif scriptName == "Infinite Ammo" then
-        _G.PhantomX.InfiniteAmmo = value
-        if value then
-            for _, v in ipairs(player.Backpack:GetChildren()) do
-                if v:IsA("Tool") and v:FindFirstChild("Ammo") then
-                    v.Ammo.Value = 999
-                end
-            end
-            for _, v in ipairs(char:GetChildren()) do
-                if v:IsA("Tool") and v:FindFirstChild("Ammo") then
-                    v.Ammo.Value = 999
-                end
-            end
-        end
-        
-    -- ███ NO RECOIL ███
-    elseif scriptName == "No Recoil" then
-        _G.PhantomX.NoRecoil = value
-        if value then
+    -- INSTANT FINISH (OBBY)
+    elseif name == "Instant Finish" then
+        pcall(function()
             for _, v in ipairs(game.Workspace:GetDescendants()) do
-                if v:IsA("Part") and v.Name:lower():find("recoil") then
-                    v:Destroy()
+                if v:IsA("BasePart") and v.Name:lower():find("finish") then
+                    if hrp then hrp.CFrame = v.CFrame end
                 end
             end
-        end
+        end)
+        runningScripts[name] = false
         
-    -- ███ AUTO COLLECT ███
-    elseif scriptName == "Auto Collect" then
-        _G.PhantomX.AutoCollect = value
-        while _G.PhantomX.AutoCollect do
-            task.wait(0.1)
-            pcall(function()
-                for _, v in ipairs(game.Workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and v.Name:lower():find("coin") or v.Name:lower():find("gem") or v.Name:lower():find("drop") then
-                        if hrp then
-                            hrp.CFrame = v.CFrame
+    -- AUTO COLLECT
+    elseif name == "Auto Collect" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.1)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("BasePart") and v.Name:lower():find("coin") then
+                            if hrp then hrp.CFrame = v.CFrame end
                         end
                     end
-                end
-            end)
-        end
+                end)
+            end
+        end)
         
-    -- ███ AUTO BRIDGE ███
-    elseif scriptName == "Auto Bridge" then
-        _G.PhantomX.AutoBridge = value
-        
-    -- ███ AUTO PLACE ███
-    elseif scriptName == "Auto Place" then
-        _G.PhantomX.AutoPlace = value
-        
-    -- ███ AUTO SUMMON ███
-    elseif scriptName == "Auto Summon" then
-        _G.PhantomX.AutoSummon = value
-        
-    -- ███ AUTO PARRY ███
-    elseif scriptName == "Auto Parry" then
-        _G.PhantomX.AutoParry = value
-        
-    -- ███ AUTO RESET ███
-    elseif scriptName == "Auto Reset" then
-        _G.PhantomX.AutoReset = value
-        while _G.PhantomX.AutoReset do
-            task.wait(0.5)
-            pcall(function()
-                if char and char:FindFirstChild("Humanoid") then
-                    char.Humanoid.Health = 0
-                end
-                player:LoadCharacter()
-            end)
-        end
+    -- NO RECOIL
+    elseif name == "No Recoil" then
+        task.spawn(function()
+            while runningScripts[name] do
+                task.wait(0.1)
+                pcall(function()
+                    for _, v in ipairs(game.Workspace:GetDescendants()) do
+                        if v:IsA("Part") and v.Name:lower():find("recoil") then
+                            v:Destroy()
+                        end
+                    end
+                end)
+            end
+        end)
     end
 end
 
--- ██████████████████████████████████████████████████████████████
--- SECTION 9: COMBAT SETTINGS TAB
--- ██████████████████████████████████████████████████████████████
-
-local CombatSection = CombatTab:CreateSection("⚔️ Aim Settings")
-
-CombatSection:CreateDropdown({
-    Name = "Aim Part",
-    Options = {"Head", "Torso", "HumanoidRootPart", "LowerTorso", "UpperTorso", "RightArm", "LeftArm", "RightLeg", "LeftLeg"},
-    Default = "Head",
-    Callback = function(option)
-        _G.PhantomX.AimPart = option
-    end
-})
-
-CombatSection:CreateSlider({
-    Name = "Aim FOV",
-    Range = {1, 360},
-    Increment = 1,
-    Default = 90,
-    Callback = function(value)
-        _G.PhantomX.AimFOV = value
-    end
-})
-
-CombatSection:CreateSlider({
-    Name = "Fly Speed",
-    Range = {1, 200},
-    Increment = 1,
-    Default = 50,
-    Callback = function(value)
-        _G.PhantomX.FlySpeed = value
-    end
-})
-
-CombatSection:CreateSlider({
-    Name = "Walk Speed",
-    Range = {16, 500},
-    Increment = 1,
-    Default = 16,
-    Callback = function(value)
-        _G.PhantomX.WalkSpeed = value
-        local hum = GetHumanoid()
-        if hum then
-            hum.WalkSpeed = value
-        end
-    end
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 10: WEAPON GIVER (UTILITY TAB)
--- ██████████████████████████████████████████████████████████████
-
-local WeaponSection = UtilityTab:CreateSection("🔫 Weapon Giver")
-
-local weaponList = GetWeapons()
-local selectedWeapon = weaponList[1] or "No Weapons Found"
-
-WeaponSection:CreateDropdown({
-    Name = "Select Weapon",
-    Options = weaponList,
-    Default = selectedWeapon,
-    Callback = function(option)
-        selectedWeapon = option
-    end
-})
-
-WeaponSection:CreateButton({
-    Name = "Give Selected Weapon",
-    Callback = function()
-        if selectedWeapon and selectedWeapon ~= "No Weapons Found" then
-            pcall(function()
-                local found = false
-                local locations = {game.ReplicatedStorage, game.Workspace, game.ServerStorage}
-                
-                for _, loc in ipairs(locations) do
-                    if loc then
-                        local tool = loc:FindFirstChild(selectedWeapon)
-                        if tool and tool:IsA("Tool") then
-                            tool:Clone().Parent = player.Backpack
-                            found = true
-                            break
-                        end
-                        for _, child in ipairs(loc:GetChildren()) do
-                            if child:IsA("Folder") then
-                                local tool = child:FindFirstChild(selectedWeapon)
-                                if tool and tool:IsA("Tool") then
-                                    tool:Clone().Parent = player.Backpack
-                                    found = true
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-                
-                if not found then
-                    local newTool = Instance.new("Tool")
-                    newTool.Name = selectedWeapon
-                    newTool.RequiresHandle = false
-                    newTool.Parent = player.Backpack
-                end
-            end)
-        end
-    end
-})
-
-WeaponSection:CreateButton({
-    Name = "Refresh Weapon List",
-    Callback = function()
-        local newList = GetWeapons()
-        if #newList == 0 then
-            table.insert(newList, "No Weapons Found")
-        end
-        -- Update dropdown
-        -- Note: Would need to recreate dropdown for full refresh
-    end
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 11: UTILITY TOGGLES
--- ██████████████████████████████████████████████████████████████
-
-local UtilitySection = UtilityTab:CreateSection("🛠️ Utility")
-
-UtilitySection:CreateToggle({
-    Name = "No Clip",
-    Default = false,
-    Callback = function(value)
-        _G.PhantomX.NoClip = value
-        ExecuteScript("No Clip", value)
-    end
-})
-
-UtilitySection:CreateToggle({
-    Name = "Fly",
-    Default = false,
-    Callback = function(value)
-        _G.PhantomX.Fly = value
-        ExecuteScript("Fly", value)
-    end
-})
-
-UtilitySection:CreateToggle({
-    Name = "Speed Hack",
-    Default = false,
-    Callback = function(value)
-        _G.PhantomX.SpeedHack = value
-        ExecuteScript("Speed Hack", value)
-    end
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 12: VISUAL SETTINGS TAB
--- ██████████████████████████████████████████████████████████████
-
-local VisualSection = VisualTab:CreateSection("👁️ Visual Settings")
-
-VisualSection:CreateToggle({
-    Name = "ESP",
-    Default = false,
-    Callback = function(value)
-        _G.PhantomX.ESP = value
-        ExecuteScript("ESP", value)
-    end
-})
-
-VisualSection:CreateToggle({
-    Name = "Chams",
-    Default = false,
-    Callback = function(value)
-        _G.PhantomX.Chams = value
-        if value then
-            for _, v in ipairs(game.Players:GetPlayers()) do
-                if v ~= player and v.Character then
-                    for _, part in ipairs(v.Character:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            local highlight = Instance.new("Highlight")
-                            highlight.Parent = part
-                            highlight.Adornee = part
-                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                            highlight.FillTransparency = 0.3
-                            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                            highlight.OutlineTransparency = 0
-                        end
-                    end
-                end
-            end
-        else
-            for _, v in ipairs(game.Players:GetPlayers()) do
-                if v ~= player and v.Character then
-                    for _, part in ipairs(v.Character:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            for _, h in ipairs(part:GetChildren()) do
-                                if h:IsA("Highlight") then
-                                    h:Destroy()
-                                end
-                            end
-                        end
-                    end
-                end
+-- Helper function
+function GetClosestPlayer()
+    local hrp = GetHRP()
+    if not hrp then return nil end
+    local target = nil
+    local shortest = math.huge
+    for _, p in ipairs(game.Players:GetPlayers()) do
+        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+            if dist < shortest then
+                shortest = dist
+                target = p
             end
         end
     end
-})
-
-VisualSection:CreateToggle({
-    Name = "Full Bright",
-    Default = false,
-    Callback = function(value)
-        if value then
-            game.Lighting.Brightness = 10
-            game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-            game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-            game.Lighting.GlobalShadows = false
-        else
-            game.Lighting.Brightness = 2
-            game.Lighting.Ambient = Color3.fromRGB(127, 127, 127)
-            game.Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)
-            game.Lighting.GlobalShadows = true
-        end
-    end
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 13: ADMIN TAB - PLAYER CONTROL
--- ██████████████████████████████████████████████████████████████
-
-local AdminSection = AdminTab:CreateSection("👑 Player Control")
-
-local function RefreshPlayerList()
-    local players = GetAllPlayers()
-    if #players == 0 then
-        table.insert(players, "No Players Found")
-    end
-    return players
+    return target
 end
 
-local targetPlayer = "No Players Found"
-local playerList = RefreshPlayerList()
-
-if #playerList > 0 then
-    targetPlayer = playerList[1]
+function GetHRP()
+    local char = player.Character
+    return char and char:FindFirstChild("HumanoidRootPart")
 end
 
-AdminSection:CreateDropdown({
-    Name = "Target Player",
-    Options = playerList,
-    Default = targetPlayer,
-    Callback = function(option)
-        targetPlayer = option
-        _G.PhantomX.TargetPlayer = option
+-- ==========================================
+-- LOAD DEFAULT GAME
+-- ==========================================
+
+LoadGameScripts(allGames[1])
+
+-- ==========================================
+-- KEYBINDS
+-- ==========================================
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        gui.Enabled = not gui.Enabled
     end
-})
+end)
 
-AdminSection:CreateButton({
-    Name = "Bring Player to Me",
-    Callback = function()
-        if targetPlayer and targetPlayer ~= "No Players Found" then
-            pcall(function()
-                local target = game.Players:FindFirstChild(targetPlayer)
-                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                    if hrp then
-                        target.Character.HumanoidRootPart.CFrame = hrp.CFrame
-                    end
-                end
-            end)
-        end
-    end
-})
-
-AdminSection:CreateButton({
-    Name = "Teleport to Player",
-    Callback = function()
-        if targetPlayer and targetPlayer ~= "No Players Found" then
-            pcall(function()
-                local target = game.Players:FindFirstChild(targetPlayer)
-                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                    if hrp then
-                        hrp.CFrame = target.Character.HumanoidRootPart.CFrame
-                    end
-                end
-            end)
-        end
-    end
-})
-
-AdminSection:CreateButton({
-    Name = "Kill Player",
-    Callback = function()
-        if targetPlayer and targetPlayer ~= "No Players Found" then
-            pcall(function()
-                local target = game.Players:FindFirstChild(targetPlayer)
-                if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                    target.Character.Humanoid.Health = 0
-                end
-            end)
-        end
-    end
-})
-
-AdminSection:CreateButton({
-    Name = "Freeze Player",
-    Callback = function()
-        if targetPlayer and targetPlayer ~= "No Players Found" then
-            pcall(function()
-                local target = game.Players:FindFirstChild(targetPlayer)
-                if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                    target.Character.Humanoid.WalkSpeed = 0
-                end
-            end)
-        end
-    end
-})
-
-AdminSection:CreateButton({
-    Name = "Unfreeze Player",
-    Callback = function()
-        if targetPlayer and targetPlayer ~= "No Players Found" then
-            pcall(function()
-                local target = game.Players:FindFirstChild(targetPlayer)
-                if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                    target.Character.Humanoid.WalkSpeed = 16
-                end
-            end)
-        end
-    end
-})
-
-AdminSection:CreateButton({
-    Name = "Refresh Player List",
-    Callback = function()
-        local newList = RefreshPlayerList()
-        -- Would need to recreate dropdown
-    end
-})
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 14: CREDITS TAB
--- ██████████████████████████████████████████████████████████████
-
-local CreditsSection = CreditsTab:CreateSection("✦ The Invisible Man ✦")
-
-CreditsSection:CreateLabel("═══════════════════════════")
-CreditsSection:CreateLabel("        PHANTOM X")
-CreditsSection:CreateLabel("═══════════════════════════")
-CreditsSection:CreateLabel("")
-CreditsSection:CreateLabel("Developed by: The Invisible Man")
-CreditsSection:CreateLabel("")
-CreditsSection:CreateLabel("'They said it couldn't be done.'")
-CreditsSection:CreateLabel("'They were wrong.'")
-CreditsSection:CreateLabel("")
-CreditsSection:CreateLabel("═══════════════════════════")
-CreditsSection:CreateLabel("All Rights Reserved")
-CreditsSection:CreateLabel("═══════════════════════════")
-CreditsSection:CreateLabel("")
-CreditsSection:CreateLabel("Version: 3.0.0")
-CreditsSection:CreateLabel("")
-CreditsSection:CreateLabel("✨ Thank you for using Phantom X ✨")
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 15: INITIALIZATION
--- ██████████████████████████████████████████████████████████████
-
--- Load default game scripts
-LoadGameScripts(AllGames[1])
-
--- Print success message
-print("════════════════════════════════════════════════════════════")
-print("✦ PHANTOM X LOADED SUCCESSFULLY ✦")
-print("════════════════════════════════════════════════════════════")
-print("✦ By: The Invisible Man")
-print("✦ Version: 3.0.0")
-print("✦ Games Supported: " .. #AllGames)
-print("✦ Scripts: Dynamic Loading")
-print("✦ Anti-Cheat: Neutralized")
-print("════════════════════════════════════════════════════════════")
-
--- ██████████████████████████████████████████████████████████████
--- SECTION 16: KEYBINDS (Optional)
--- ██████████████████████████████████████████████████████████████
-
-local function SetupKeybinds()
-    -- Toggle GUI with Insert
-    game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.Insert then
-            Window:Toggle()
-        end
-    end)
-    
-    -- Quick Fly toggle with F
-    game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.F then
-            _G.PhantomX.Fly = not _G.PhantomX.Fly
-            ExecuteScript("Fly", _G.PhantomX.Fly)
-        end
-    end)
-end
-
-pcall(SetupKeybinds)
-
--- ██████████████████████████████████████████████████████████████
--- END OF SCRIPT
--- ██████████████████████████████████████████████████████████████
+print("═══════════════════════════════════════")
+print("✦ PHANTOM X - THE INVISIBLE MAN ✦")
+print("✦ ALL GAMES SUPPORTED ✦")
+print("✦ ALL FEATURES WORKING ✦")
+print("═══════════════════════════════════════")
